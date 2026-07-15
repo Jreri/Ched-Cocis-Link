@@ -18,8 +18,17 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				display: ['"DM Serif Display"', 'Georgia', 'serif'],
+				sans: ['"Fira Sans"', 'system-ui', 'sans-serif'],
+				serif: ['"DM Serif Display"', 'Georgia', 'serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
+				ink: {
+					DEFAULT: 'hsl(var(--ink))',
+					soft: 'hsl(var(--ink-soft))',
+				},
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
