@@ -117,15 +117,15 @@ const SearchResults = () => {
       )
     }
 
-    if (selectedState) {
+    if (selectedState && selectedState !== 'all') {
       filtered = filtered.filter(company => company.state === selectedState)
     }
 
-    if (selectedIndustry) {
+    if (selectedIndustry && selectedIndustry !== 'all') {
       filtered = filtered.filter(company => company.industry === selectedIndustry)
     }
 
-    if (selectedSize) {
+    if (selectedSize && selectedSize !== 'all') {
       filtered = filtered.filter(company => company.size.includes(selectedSize.split(' ')[0]))
     }
 
@@ -159,7 +159,7 @@ const SearchResults = () => {
                 <SelectValue placeholder="Select State" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All States</SelectItem>
+                <SelectItem value="all">All States</SelectItem>
                 {states.map((state) => (
                   <SelectItem key={state} value={state}>{state}</SelectItem>
                 ))}
@@ -171,7 +171,7 @@ const SearchResults = () => {
                 <SelectValue placeholder="Industry" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Industries</SelectItem>
+                <SelectItem value="all">All Industries</SelectItem>
                 {industries.map((industry) => (
                   <SelectItem key={industry} value={industry}>{industry}</SelectItem>
                 ))}
