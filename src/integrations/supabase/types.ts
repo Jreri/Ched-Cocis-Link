@@ -14,16 +14,256 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          address: string
+          business_district: string | null
+          city: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          lga: string | null
+          logo_url: string | null
+          name: string
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          business_district?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          lga?: string | null
+          logo_url?: string | null
+          name: string
+          state: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          business_district?: string | null
+          city?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          lga?: string | null
+          logo_url?: string | null
+          name?: string
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      company_departments: {
+        Row: {
+          company_id: string
+          department_id: string
+        }
+        Insert: {
+          company_id: string
+          department_id: string
+        }
+        Update: {
+          company_id?: string
+          department_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_departments_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      placement_access: {
+        Row: {
+          amount_naira: number
+          city: string
+          id: string
+          paid_at: string
+          paystack_reference: string
+          state: string
+          user_id: string
+        }
+        Insert: {
+          amount_naira: number
+          city: string
+          id?: string
+          paid_at?: string
+          paystack_reference: string
+          state: string
+          user_id: string
+        }
+        Update: {
+          amount_naira?: number
+          city?: string
+          id?: string
+          paid_at?: string
+          paystack_reference?: string
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department_id: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department_id?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_available_cities: {
+        Args: { _state: string }
+        Returns: {
+          city: string
+          placement_count: number
+        }[]
+      }
+      get_available_states: {
+        Args: never
+        Returns: {
+          placement_count: number
+          state: string
+        }[]
+      }
+      get_location_count: {
+        Args: { _city: string; _state: string }
+        Returns: number
+      }
+      get_my_unlocked_locations: {
+        Args: never
+        Returns: {
+          city: string
+          company_count: number
+          paid_at: string
+          state: string
+        }[]
+      }
+      get_unlocked_companies: {
+        Args: { _city: string; _state: string }
+        Returns: {
+          address: string
+          business_district: string
+          city: string
+          contact_email: string
+          contact_phone: string
+          description: string
+          id: string
+          lga: string
+          logo_url: string
+          name: string
+          state: string
+        }[]
+      }
+      has_paid_for: {
+        Args: { _city: string; _state: string }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +390,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "student"],
+    },
   },
 } as const
