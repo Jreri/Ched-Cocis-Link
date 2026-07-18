@@ -29,8 +29,19 @@ const Header = () => {
   useEffect(() => { setOpen(false) }, [location.pathname])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(!!session))
+    const checkAdmin = async (uid?: string) => {
+      if (!uid) { setIsAdmin(false); return }
+      const { data } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" })
+      setIsAdmin(!!data)
+    }
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session)
+      checkAdmin(data.session?.user.id)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthed(!!session)
+      checkAdmin(session?.user.id)
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
 
