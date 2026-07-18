@@ -5,10 +5,8 @@ const columns = [
   {
     title: "Platform",
     links: [
-      { to: "/search", label: "Find placements" },
-      { to: "/advanced-search", label: "Advanced search" },
-      { to: "/browse-locations", label: "Browse by location" },
-      { to: "/compare", label: "Compare companies" },
+      { to: "/placements", label: "Find placements" },
+      { to: "/how-to-apply", label: "How it works" },
     ],
   },
   {
@@ -17,14 +15,12 @@ const columns = [
       { to: "/register", label: "Create account" },
       { to: "/login", label: "Sign in" },
       { to: "/dashboard", label: "Dashboard" },
-      { to: "/how-to-apply", label: "How to apply" },
     ],
   },
   {
     title: "Company",
     links: [
       { to: "/about", label: "About us" },
-      { to: "/success-stories", label: "Success stories" },
       { to: "/contact", label: "Contact" },
       { to: "/help", label: "Help center" },
     ],

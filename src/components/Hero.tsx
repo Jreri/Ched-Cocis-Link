@@ -28,7 +28,7 @@ const Hero = () => {
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-3">
-              <Link to="/search">
+              <Link to="/placements">
                 <Button size="xl" className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2 px-7">
                   Browse placements <ArrowUpRight className="w-5 h-5" />
                 </Button>

@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/enhanced-button"
 import { Menu, X, ArrowUpRight } from "lucide-react"
 import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
 
-const nav = [
+const publicNav = [
   { to: "/placements", label: "Placements" },
-  { to: "/search", label: "Companies" },
-  { to: "/success-stories", label: "Stories" },
+  { to: "/how-to-apply", label: "How it works" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
 ]
@@ -14,7 +14,9 @@ const nav = [
 const Header = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [authed, setAuthed] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12)
@@ -24,6 +26,17 @@ const Header = () => {
   }, [])
 
   useEffect(() => { setOpen(false) }, [location.pathname])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(!!session))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    navigate("/", { replace: true })
+  }
 
   return (
     <header className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? "bg-background/85 backdrop-blur-xl border-b border-border" : "bg-transparent"}`}>
@@ -43,14 +56,10 @@ const Header = () => {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
-            {nav.map(item => {
+            {publicNav.map(item => {
               const active = location.pathname === item.to
               return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`px-4 py-2 text-sm rounded-full transition-colors ${active ? "text-ink bg-muted" : "text-muted-foreground hover:text-ink"}`}
-                >
+                <Link key={item.to} to={item.to} className={`px-4 py-2 text-sm rounded-full transition-colors ${active ? "text-ink bg-muted" : "text-muted-foreground hover:text-ink"}`}>
                   {item.label}
                 </Link>
               )
@@ -58,21 +67,28 @@ const Header = () => {
           </nav>
 
           <div className="hidden lg:flex items-center gap-2">
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="rounded-full">Sign in</Button>
-            </Link>
-            <Link to="/register">
-              <Button size="sm" className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-1.5">
-                Get started <ArrowUpRight className="w-4 h-4" />
-              </Button>
-            </Link>
+            {authed ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button>
+                </Link>
+                <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login"><Button variant="ghost" size="sm" className="rounded-full">Sign in</Button></Link>
+                <Link to="/register">
+                  <Button size="sm" className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-1.5">
+                    Get started <ArrowUpRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
-          <button
-            className="lg:hidden p-2 text-ink"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
+          <button className="lg:hidden p-2 text-ink" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -80,14 +96,23 @@ const Header = () => {
         {open && (
           <div className="lg:hidden pb-6 animate-fade-in">
             <nav className="flex flex-col gap-1 pt-4 border-t border-border">
-              {nav.map(item => (
+              {publicNav.map(item => (
                 <Link key={item.to} to={item.to} className="px-4 py-3 text-base text-ink hover:bg-muted rounded-lg">
                   {item.label}
                 </Link>
               ))}
               <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border">
-                <Link to="/login"><Button variant="ghost" className="w-full justify-start rounded-lg">Sign in</Button></Link>
-                <Link to="/register"><Button className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Get started</Button></Link>
+                {authed ? (
+                  <>
+                    <Link to="/dashboard"><Button variant="ghost" className="w-full justify-start rounded-lg">Dashboard</Button></Link>
+                    <Button onClick={signOut} className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login"><Button variant="ghost" className="w-full justify-start rounded-lg">Sign in</Button></Link>
+                    <Link to="/register"><Button className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Get started</Button></Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>
