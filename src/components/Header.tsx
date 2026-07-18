@@ -15,6 +15,7 @@ const Header = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [authed, setAuthed] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
