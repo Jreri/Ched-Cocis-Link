@@ -4,8 +4,8 @@ import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 
 const nav = [
+  { to: "/placements", label: "Placements" },
   { to: "/search", label: "Companies" },
-  { to: "/browse-locations", label: "Locations" },
   { to: "/success-stories", label: "Stories" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
