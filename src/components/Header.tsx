@@ -72,6 +72,9 @@ const Header = () => {
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button>
                 </Link>
+                <Link to="/profile">
+                  <Button variant="ghost" size="sm" className="rounded-full">Profile</Button>
+                </Link>
                 <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">
                   Sign out
                 </Button>
@@ -105,6 +108,7 @@ const Header = () => {
                 {authed ? (
                   <>
                     <Link to="/dashboard"><Button variant="ghost" className="w-full justify-start rounded-lg">Dashboard</Button></Link>
+                    <Link to="/profile"><Button variant="ghost" className="w-full justify-start rounded-lg">Profile</Button></Link>
                     <Button onClick={signOut} className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
                   </>
                 ) : (

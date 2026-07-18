@@ -155,6 +155,9 @@ export type Database = {
           department_id: string | null
           full_name: string | null
           id: string
+          institution: string | null
+          level: string | null
+          phone: string | null
           updated_at: string
         }
         Insert: {
@@ -162,6 +165,9 @@ export type Database = {
           department_id?: string | null
           full_name?: string | null
           id: string
+          institution?: string | null
+          level?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -169,6 +175,9 @@ export type Database = {
           department_id?: string | null
           full_name?: string | null
           id?: string
+          institution?: string | null
+          level?: string | null
+          phone?: string | null
           updated_at?: string
         }
         Relationships: [

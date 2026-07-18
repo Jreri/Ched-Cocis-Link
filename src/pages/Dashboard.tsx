@@ -9,7 +9,13 @@ import { Loader2, MapPin, User, Unlock, ArrowRight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
-type Profile = { full_name: string | null; department_id: string | null }
+type Profile = {
+  full_name: string | null
+  department_id: string | null
+  level: string | null
+  institution: string | null
+  phone: string | null
+}
 type Unlocked = { state: string; city: string; paid_at: string; company_count: number }
 
 const Dashboard = () => {
@@ -31,21 +37,32 @@ const Dashboard = () => {
         navigate("/login", { replace: true })
         return
       }
-      setEmail(sess.session.user.email || "")
+      const user = sess.session.user
+      setEmail(user.email || "")
+      const meta = (user.user_metadata || {}) as Record<string, string | null>
 
-      const uid = sess.session.user.id
+      const uid = user.id
       const [{ data: prof }, { data: locs }] = await Promise.all([
-        supabase.from("profiles").select("full_name, department_id").eq("id", uid).maybeSingle(),
+        supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
         supabase.rpc("get_my_unlocked_locations"),
       ])
-      setProfile((prof as Profile) || null)
+
+      // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
+      const merged: Profile = {
+        full_name: prof?.full_name ?? meta.full_name ?? null,
+        department_id: prof?.department_id ?? (meta.department_id as string) ?? null,
+        level: prof?.level ?? meta.level ?? null,
+        institution: prof?.institution ?? meta.institution ?? null,
+        phone: prof?.phone ?? meta.phone ?? null,
+      }
+      setProfile(merged)
       setUnlocked((locs as Unlocked[]) || [])
 
-      if (prof?.department_id) {
+      if (merged.department_id) {
         const { data: dept } = await supabase
           .from("departments")
           .select("name")
-          .eq("id", prof.department_id)
+          .eq("id", merged.department_id)
           .maybeSingle()
         setDepartmentName(dept?.name || "")
       }
@@ -68,37 +85,47 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-10 max-w-6xl">
+      <main className="flex-1 container mx-auto px-4 py-24 md:py-28 max-w-6xl">
         <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
-            <h1 className="text-4xl font-serif font-bold">
+            <h1 className="text-3xl md:text-4xl font-display">
               Hi{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋
             </h1>
             <p className="text-muted-foreground mt-1">Your placement dashboard.</p>
           </div>
-          <Button variant="outline" onClick={signOut}>Sign out</Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline"><Link to="/profile">Edit profile</Link></Button>
+            <Button variant="outline" onClick={signOut}>Sign out</Button>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><User className="w-4 h-4" />Account</CardTitle></CardHeader>
             <CardContent>
-              <div className="font-medium">{profile?.full_name || "—"}</div>
-              <div className="text-sm text-muted-foreground truncate">{email}</div>
+              <div className="font-medium truncate">{profile?.full_name || "—"}</div>
+              <div className="text-xs text-muted-foreground truncate">{email}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Department</CardTitle></CardHeader>
             <CardContent>
-              <div className="font-medium">{departmentName || "Not set"}</div>
+              <div className="font-medium truncate">{departmentName || <Link to="/profile" className="text-primary underline">Set now</Link>}</div>
+              {profile?.level && <div className="text-xs text-muted-foreground">{profile.level}</div>}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Institution</CardTitle></CardHeader>
+            <CardContent>
+              <div className="font-medium truncate">{profile?.institution || <Link to="/profile" className="text-primary underline">Add</Link>}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Locations unlocked</CardTitle></CardHeader>
             <CardContent>
-              <div className="text-3xl font-serif">{unlocked.length}</div>
+              <div className="text-3xl font-display">{unlocked.length}</div>
             </CardContent>
           </Card>
         </div>
