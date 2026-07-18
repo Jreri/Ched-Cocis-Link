@@ -9,7 +9,13 @@ import { Loader2, MapPin, User, Unlock, ArrowRight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
-type Profile = { full_name: string | null; department_id: string | null }
+type Profile = {
+  full_name: string | null
+  department_id: string | null
+  level: string | null
+  institution: string | null
+  phone: string | null
+}
 type Unlocked = { state: string; city: string; paid_at: string; company_count: number }
 
 const Dashboard = () => {
@@ -31,21 +37,32 @@ const Dashboard = () => {
         navigate("/login", { replace: true })
         return
       }
-      setEmail(sess.session.user.email || "")
+      const user = sess.session.user
+      setEmail(user.email || "")
+      const meta = (user.user_metadata || {}) as Record<string, string | null>
 
-      const uid = sess.session.user.id
+      const uid = user.id
       const [{ data: prof }, { data: locs }] = await Promise.all([
-        supabase.from("profiles").select("full_name, department_id").eq("id", uid).maybeSingle(),
+        supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
         supabase.rpc("get_my_unlocked_locations"),
       ])
-      setProfile((prof as Profile) || null)
+
+      // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
+      const merged: Profile = {
+        full_name: prof?.full_name ?? meta.full_name ?? null,
+        department_id: prof?.department_id ?? (meta.department_id as string) ?? null,
+        level: prof?.level ?? meta.level ?? null,
+        institution: prof?.institution ?? meta.institution ?? null,
+        phone: prof?.phone ?? meta.phone ?? null,
+      }
+      setProfile(merged)
       setUnlocked((locs as Unlocked[]) || [])
 
-      if (prof?.department_id) {
+      if (merged.department_id) {
         const { data: dept } = await supabase
           .from("departments")
           .select("name")
-          .eq("id", prof.department_id)
+          .eq("id", merged.department_id)
           .maybeSingle()
         setDepartmentName(dept?.name || "")
       }
