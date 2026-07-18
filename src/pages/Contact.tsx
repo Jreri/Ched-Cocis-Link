@@ -144,7 +144,7 @@ const Contact = () => {
       
       <main>
         {/* Hero Section */}
-        <section className="hero-gradient py-20 text-center">
+        <section className="hero-gradient pt-32 pb-20 text-center">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 animate-fade-in">
               Contact Us
