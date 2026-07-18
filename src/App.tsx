@@ -20,6 +20,7 @@ import CompanyComparison from "./pages/CompanyComparison";
 import ApplicationStatus from "./pages/ApplicationStatus";
 import SuccessStories from "./pages/SuccessStories";
 import BrowseByLocation from "./pages/BrowseByLocation";
+import Placements from "./pages/Placements";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/company/:id" element={<CompanyProfile />} />
           <Route path="/compare" element={<CompanyComparison />} />
           <Route path="/browse-location" element={<BrowseByLocation />} />
+          <Route path="/placements" element={<Placements />} />
           <Route path="/applications" element={<ApplicationStatus />} />
           <Route path="/success-stories" element={<SuccessStories />} />
           <Route path="/about" element={<About />} />
