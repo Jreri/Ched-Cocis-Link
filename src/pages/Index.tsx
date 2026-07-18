@@ -16,11 +16,6 @@ const Index = () => {
       "name": "StudentPlace Nigeria",
       "description": "Nigeria's leading platform for student placements - IT, SIWES, and job opportunities",
       "url": "https://studentplace.ng",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://studentplace.ng/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
     }
 
     const script = document.createElement('script')
