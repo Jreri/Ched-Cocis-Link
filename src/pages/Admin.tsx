@@ -370,6 +370,53 @@ export default function Admin() {
               <Field label="Contact phone"><Input value={form.contact_phone} onChange={e => setForm({ ...form, contact_phone: e.target.value })} /></Field>
             </div>
             <Field label="Description"><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} /></Field>
+
+            <div className="border-t border-border pt-4">
+              <Label className="mb-2 block text-sm font-semibold">Internship application</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Application email *">
+                  <Input type="email" value={form.internship_email} placeholder="hr@company.com" onChange={e => setForm({ ...form, internship_email: e.target.value })} />
+                </Field>
+                <Field label="Position offered">
+                  <Input value={form.internship_position} placeholder="e.g. Software Intern" onChange={e => setForm({ ...form, internship_position: e.target.value })} />
+                </Field>
+              </div>
+              <Field label="Instructions for applicants">
+                <Textarea value={form.instructions} rows={3} placeholder="Any special notes shown to applicants." onChange={e => setForm({ ...form, instructions: e.target.value })} />
+              </Field>
+              <label className="flex items-center gap-2 text-sm mt-2">
+                <Checkbox checked={form.applications_enabled} onCheckedChange={v => setForm({ ...form, applications_enabled: !!v })} />
+                <span>Accept applications</span>
+              </label>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <Label className="mb-2 block text-sm font-semibold">Application requirements</Label>
+              <p className="text-xs text-muted-foreground mb-2">Override which fields applicants must submit. "Default" uses the platform standard.</p>
+              <div className="border border-border rounded-lg divide-y max-h-72 overflow-y-auto">
+                {CANONICAL_FIELDS.map(f => {
+                  const val = form.requirements[f.key] ?? "default"
+                  return (
+                    <div key={f.key} className="flex items-center gap-3 p-2 text-sm">
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate">{f.label}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{f.kind} · default: {f.default}</div>
+                      </div>
+                      <Select value={val} onValueChange={(v) => setForm(s => ({ ...s, requirements: { ...s.requirements, [f.key]: v as any } }))}>
+                        <SelectTrigger className="w-36 h-8"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Default</SelectItem>
+                          <SelectItem value="required">Required</SelectItem>
+                          <SelectItem value="optional">Optional</SelectItem>
+                          <SelectItem value="hidden">Hidden</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
             <div>
               <Label className="mb-2 block">Departments (who can see this)</Label>
               <div className="grid grid-cols-2 gap-2 border border-border rounded-lg p-3 max-h-48 overflow-y-auto">
