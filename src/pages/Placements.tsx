@@ -316,24 +316,25 @@ const Placements = () => {
                   )}
                   {companies.map((co) => (
                     <div key={co.id} className="p-4 rounded-lg border bg-card">
-                      <div className="font-semibold">{co.name}</div>
-                      <div className="text-sm text-muted-foreground mb-2">{co.address}</div>
-                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        {co.contact_email && (
-                          <span className="inline-flex items-center gap-1">
-                            <Mail className="h-3 w-3" /> {co.contact_email}
-                          </span>
-                        )}
-                        {co.contact_phone && (
-                          <span className="inline-flex items-center gap-1">
-                            <Phone className="h-3 w-3" /> {co.contact_phone}
-                          </span>
-                        )}
-                        {co.business_district && (
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="h-3 w-3" /> {co.business_district}
-                          </span>
-                        )}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-semibold">{co.name}</div>
+                          <div className="text-sm text-muted-foreground mb-2">{co.address}</div>
+                          <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                            {co.contact_email && (
+                              <span className="inline-flex items-center gap-1"><Mail className="h-3 w-3" /> {co.contact_email}</span>
+                            )}
+                            {co.contact_phone && (
+                              <span className="inline-flex items-center gap-1"><Phone className="h-3 w-3" /> {co.contact_phone}</span>
+                            )}
+                            {co.business_district && (
+                              <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {co.business_district}</span>
+                            )}
+                          </div>
+                        </div>
+                        <Button asChild size="sm" className="shrink-0">
+                          <Link to={`/apply/${co.id}`}>Apply for Internship</Link>
+                        </Button>
                       </div>
                     </div>
                   ))}
