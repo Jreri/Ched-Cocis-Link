@@ -108,7 +108,7 @@ const Header = () => {
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="lg:hidden fixed top-0 right-0 h-full w-[86%] max-w-sm bg-background shadow-2xl z-50 flex flex-col border-l border-border animate-slide-in-right">
+          <aside className="lg:hidden fixed top-0 right-0 h-full w-[86%] max-w-sm bg-background shadow-2xl z-50 flex flex-col border-l border-border animate-fade-in">
             <div className="h-20 flex items-center px-6 border-b border-border">
               <span className="font-display text-lg text-ink">ChedLink</span>
               <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">CCL</span>
