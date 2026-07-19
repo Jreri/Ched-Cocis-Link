@@ -207,8 +207,9 @@ export default function Admin() {
       await supabase.from("company_requirements").delete().eq("company_id", companyId)
       const overrides = Object.entries(form.requirements)
         .filter(([, v]) => v && v !== "default")
-        .map(([field_key, requirement], i) => {
+        .map(([field_key, v], i) => {
           const canon = CANONICAL_FIELDS.find(f => f.key === field_key)
+          const requirement = v as FieldReq
           return {
             company_id: companyId,
             field_key,
