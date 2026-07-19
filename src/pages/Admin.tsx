@@ -183,6 +183,10 @@ export default function Admin() {
         description: form.description.trim() || null,
         contact_email: form.contact_email.trim() || null,
         contact_phone: form.contact_phone.trim() || null,
+        internship_email: form.internship_email.trim() || null,
+        internship_position: form.internship_position.trim() || null,
+        instructions: form.instructions.trim() || null,
+        applications_enabled: form.applications_enabled,
         is_active: form.is_active,
       }
       let companyId = form.id
@@ -198,6 +202,25 @@ export default function Admin() {
       await supabase.from("company_departments").delete().eq("company_id", companyId)
       if (form.department_ids.length) {
         await supabase.from("company_departments").insert(form.department_ids.map(did => ({ company_id: companyId, department_id: did })))
+      }
+      // requirements overrides
+      await supabase.from("company_requirements").delete().eq("company_id", companyId)
+      const overrides = Object.entries(form.requirements)
+        .filter(([, v]) => v && v !== "default")
+        .map(([field_key, requirement], i) => {
+          const canon = CANONICAL_FIELDS.find(f => f.key === field_key)
+          return {
+            company_id: companyId,
+            field_key,
+            kind: canon?.kind ?? "info",
+            label: canon?.label ?? field_key,
+            requirement,
+            sort_order: i,
+          }
+        })
+      if (overrides.length) {
+        const { error: rErr } = await supabase.from("company_requirements").insert(overrides)
+        if (rErr) throw rErr
       }
       toast({ title: form.id ? "Company updated" : "Company created" })
       setDialogOpen(false)
