@@ -15,7 +15,7 @@ const Hero = () => {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left — editorial copy */}
           <div className="lg:col-span-7 animate-fade-in">
-            <div className="rule text-ink/60 mb-8">Issue N°01 · Placements Nigeria</div>
+            <div className="rule text-ink/60 mb-8">ChedLink · CCL · In collaboration with COCIS</div>
 
             <h1 className="font-display text-[3.25rem] sm:text-6xl lg:text-7xl xl:text-8xl leading-[0.95] text-ink text-balance">
               Every great career
@@ -23,8 +23,8 @@ const Hero = () => {
             </h1>
 
             <p className="mt-8 text-lg md:text-xl text-ink-soft max-w-xl leading-relaxed">
-              A curated network of Nigerian companies opening their doors to students seeking
-              IT, SIWES and graduate placements — across all thirty-six states.
+              ChedLink connects Nigerian students with vetted companies for SIWES, IT and
+              internship placements — developed by Ched Dev in collaboration with COCIS.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-3">
