@@ -16,6 +16,7 @@ import HowToApply from "./pages/HowToApply";
 import Placements from "./pages/Placements";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Apply from "./pages/Apply";
 
 const queryClient = new QueryClient();
 
