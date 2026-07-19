@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers } from "lucide-react"
+import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
 
 type Company = {
   id: string
@@ -26,6 +27,10 @@ type Company = {
   description: string | null
   contact_email: string | null
   contact_phone: string | null
+  internship_email: string | null
+  internship_position: string | null
+  instructions: string | null
+  applications_enabled: boolean | null
   is_active: boolean
 }
 
@@ -42,8 +47,13 @@ const emptyForm = {
   description: "",
   contact_email: "",
   contact_phone: "",
+  internship_email: "",
+  internship_position: "",
+  instructions: "",
+  applications_enabled: true,
   is_active: true,
   department_ids: [] as string[],
+  requirements: {} as Record<string, FieldReq | "default">,
 }
 
 export default function Admin() {
