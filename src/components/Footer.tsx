@@ -1,5 +1,23 @@
 import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useRef } from "react"
+
+const SecretAdminMark = () => {
+  const nav = useNavigate()
+  const clicks = useRef<number[]>([])
+  const onClick = () => {
+    const now = Date.now()
+    clicks.current = clicks.current.filter(t => now - t < 2000)
+    clicks.current.push(now)
+    if (clicks.current.length >= 5) {
+      clicks.current = []
+      nav("/admin")
+    }
+  }
+  return (
+    <span onClick={onClick} className="cursor-default select-none">ChedLink (CCL)</span>
+  )
+}
 
 const columns = [
   {
@@ -39,11 +57,11 @@ const Footer = () => {
           <div className="lg:col-span-5">
             <Link to="/" className="flex items-center gap-2.5">
               <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="font-display text-primary-foreground text-xl leading-none">S</span>
+                <span className="font-display text-primary-foreground text-xl leading-none">C</span>
               </div>
               <div>
-                <div className="font-display text-2xl">StudentPlace</div>
-                <div className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground/60">Nigeria</div>
+                <div className="font-display text-2xl">ChedLink</div>
+                <div className="text-[10px] uppercase tracking-[0.25em] text-primary-foreground/60">CCL · with COCIS</div>
               </div>
             </Link>
             <p className="font-display text-3xl md:text-4xl leading-tight mt-8 max-w-md text-balance">
@@ -52,7 +70,7 @@ const Footer = () => {
             </p>
 
             <div className="mt-10 space-y-3 text-sm text-primary-foreground/70">
-              <div className="flex items-center gap-3"><Mail className="w-4 h-4" /> support@studentplace.ng</div>
+              <div className="flex items-center gap-3"><Mail className="w-4 h-4" /> support@chedlink.ng</div>
               <div className="flex items-center gap-3"><Phone className="w-4 h-4" /> +234 800 000 0000</div>
               <div className="flex items-center gap-3"><MapPin className="w-4 h-4" /> Lagos, Nigeria</div>
             </div>
@@ -78,7 +96,9 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-primary-foreground/50">
-          <div>© {new Date().getFullYear()} StudentPlace Nigeria. All rights reserved.</div>
+          <div>
+            © {new Date().getFullYear()} <SecretAdminMark /> · Developed by Ched Dev in collaboration with COCIS.
+          </div>
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-primary-foreground">Privacy</Link>
             <Link to="/terms" className="hover:text-primary-foreground">Terms</Link>
