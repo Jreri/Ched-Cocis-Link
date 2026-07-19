@@ -140,7 +140,10 @@ export default function Admin() {
     setDialogOpen(true)
   }
 
-  const openEdit = (c: Company) => {
+  const openEdit = async (c: Company) => {
+    const { data: reqRows } = await supabase.from("company_requirements").select("field_key, requirement").eq("company_id", c.id)
+    const req: Record<string, FieldReq | "default"> = {}
+    ;(reqRows || []).forEach((r: any) => { req[r.field_key] = r.requirement })
     setForm({
       id: c.id,
       name: c.name,
@@ -152,8 +155,13 @@ export default function Admin() {
       description: c.description || "",
       contact_email: c.contact_email || "",
       contact_phone: c.contact_phone || "",
+      internship_email: c.internship_email || "",
+      internship_position: c.internship_position || "",
+      instructions: c.instructions || "",
+      applications_enabled: c.applications_enabled !== false,
       is_active: c.is_active,
       department_ids: companyDepts[c.id] || [],
+      requirements: req,
     })
     setDialogOpen(true)
   }
