@@ -15,7 +15,6 @@ const Header = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [authed, setAuthed] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -28,20 +27,18 @@ const Header = () => {
 
   useEffect(() => { setOpen(false) }, [location.pathname])
 
+  // Body scroll lock when drawer open
   useEffect(() => {
-    const checkAdmin = async (uid?: string) => {
-      if (!uid) { setIsAdmin(false); return }
-      const { data } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" })
-      setIsAdmin(!!data)
+    if (open) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = "hidden"
+      return () => { document.body.style.overflow = prev }
     }
-    supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session)
-      checkAdmin(data.session?.user.id)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAuthed(!!session)
-      checkAdmin(session?.user.id)
-    })
+  }, [open])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s))
     return () => sub.subscription.unsubscribe()
   }, [])
 
@@ -57,13 +54,13 @@ const Header = () => {
           <Link to="/" className="flex items-center gap-2.5 group">
             <div className="relative">
               <div className="w-9 h-9 bg-ink rounded-lg flex items-center justify-center transition-transform group-hover:rotate-3">
-                <span className="font-display text-primary-foreground text-lg leading-none">S</span>
+                <span className="font-display text-primary-foreground text-lg leading-none">C</span>
               </div>
               <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-accent rounded-full" />
             </div>
             <div className="leading-tight">
-              <div className="font-display text-xl text-ink">StudentPlace</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-0.5">Nigeria</div>
+              <div className="font-display text-xl text-ink">ChedLink</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground -mt-0.5">CCL · with COCIS</div>
             </div>
           </Link>
 
@@ -81,20 +78,9 @@ const Header = () => {
           <div className="hidden lg:flex items-center gap-2">
             {authed ? (
               <>
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button>
-                </Link>
-                <Link to="/profile">
-                  <Button variant="ghost" size="sm" className="rounded-full">Profile</Button>
-                </Link>
-                {isAdmin && (
-                  <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="rounded-full">Admin</Button>
-                  </Link>
-                )}
-                <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">
-                  Sign out
-                </Button>
+                <Link to="/dashboard"><Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button></Link>
+                <Link to="/profile"><Button variant="ghost" size="sm" className="rounded-full">Profile</Button></Link>
+                <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
               </>
             ) : (
               <>
@@ -108,25 +94,36 @@ const Header = () => {
             )}
           </div>
 
-          <button className="lg:hidden p-2 text-ink" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+          <button className="lg:hidden p-2 text-ink z-[60] relative" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
+      </div>
 
-        {open && (
-          <div className="lg:hidden pb-6 animate-fade-in">
-            <nav className="flex flex-col gap-1 pt-4 border-t border-border">
+      {/* Mobile drawer + backdrop */}
+      {open && (
+        <>
+          <div
+            className="lg:hidden fixed inset-0 top-0 bg-ink/60 backdrop-blur-sm z-40 animate-fade-in"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <aside className="lg:hidden fixed top-0 right-0 h-full w-[86%] max-w-sm bg-background shadow-2xl z-50 flex flex-col border-l border-border animate-slide-in-right">
+            <div className="h-20 flex items-center px-6 border-b border-border">
+              <span className="font-display text-lg text-ink">ChedLink</span>
+              <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">CCL</span>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
               {publicNav.map(item => (
                 <Link key={item.to} to={item.to} className="px-4 py-3 text-base text-ink hover:bg-muted rounded-lg">
                   {item.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border">
+              <div className="flex flex-col gap-2 pt-4 mt-4 border-t border-border">
                 {authed ? (
                   <>
                     <Link to="/dashboard"><Button variant="ghost" className="w-full justify-start rounded-lg">Dashboard</Button></Link>
                     <Link to="/profile"><Button variant="ghost" className="w-full justify-start rounded-lg">Profile</Button></Link>
-                    {isAdmin && <Link to="/admin"><Button variant="ghost" className="w-full justify-start rounded-lg">Admin</Button></Link>}
                     <Button onClick={signOut} className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
                   </>
                 ) : (
@@ -137,9 +134,12 @@ const Header = () => {
                 )}
               </div>
             </nav>
-          </div>
-        )}
-      </div>
+            <div className="p-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground border-t border-border">
+              Ched Dev × COCIS
+            </div>
+          </aside>
+        </>
+      )}
     </header>
   )
 }
