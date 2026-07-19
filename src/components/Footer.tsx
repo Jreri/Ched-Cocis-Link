@@ -1,5 +1,23 @@
 import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { useRef } from "react"
+
+const SecretAdminMark = () => {
+  const nav = useNavigate()
+  const clicks = useRef<number[]>([])
+  const onClick = () => {
+    const now = Date.now()
+    clicks.current = clicks.current.filter(t => now - t < 2000)
+    clicks.current.push(now)
+    if (clicks.current.length >= 5) {
+      clicks.current = []
+      nav("/admin")
+    }
+  }
+  return (
+    <span onClick={onClick} className="cursor-default select-none">ChedLink (CCL)</span>
+  )
+}
 
 const columns = [
   {
