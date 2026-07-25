@@ -5,7 +5,7 @@ import Footer from "@/components/Footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, MapPin, User, Unlock, ArrowRight } from "lucide-react"
+import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
@@ -17,6 +17,14 @@ type Profile = {
   phone: string | null
 }
 type Unlocked = { state: string; city: string; paid_at: string; company_count: number }
+type Application = {
+  id: string
+  company_id: string
+  status: string
+  sent_to_email: string | null
+  created_at: string
+  snapshot: { company_name?: string; info?: Record<string, string> } | null
+}
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -27,8 +35,10 @@ const Dashboard = () => {
   const [unlocked, setUnlocked] = useState<Unlocked[]>([])
 
   useEffect(() => {
-    document.title = "Dashboard — StudentPlace Nigeria"
+    document.title = "Dashboard — ChedLink"
   }, [])
+
+  const [applications, setApplications] = useState<Application[]>([])
 
   useEffect(() => {
     ;(async () => {
@@ -42,9 +52,10 @@ const Dashboard = () => {
       const meta = (user.user_metadata || {}) as Record<string, string | null>
 
       const uid = user.id
-      const [{ data: prof }, { data: locs }] = await Promise.all([
+      const [{ data: prof }, { data: locs }, { data: apps }] = await Promise.all([
         supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
         supabase.rpc("get_my_unlocked_locations"),
+        supabase.from("applications").select("id, company_id, status, sent_to_email, created_at, snapshot").eq("user_id", uid).order("created_at", { ascending: false }).limit(10),
       ])
 
       // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
@@ -57,6 +68,7 @@ const Dashboard = () => {
       }
       setProfile(merged)
       setUnlocked((locs as Unlocked[]) || [])
+      setApplications((apps as Application[]) || [])
 
       if (merged.department_id) {
         const { data: dept } = await supabase
@@ -90,10 +102,11 @@ const Dashboard = () => {
       <main className="flex-1 container mx-auto px-4 py-24 md:py-28 max-w-6xl">
         <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl md:text-4xl font-display">
-              Hi{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋
+            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Dashboard</div>
+            <h1 className="text-3xl md:text-4xl font-display text-ink">
+              {profile?.full_name ? profile.full_name.split(" ")[0] : "Welcome"}
             </h1>
-            <p className="text-muted-foreground mt-1">Your placement dashboard.</p>
+            <p className="text-muted-foreground mt-1">Your placement activity at a glance.</p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/profile">Edit profile</Link></Button>
@@ -158,6 +171,35 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <Badge className="bg-emerald-600 hover:bg-emerald-600"><Unlock className="w-3 h-3 mr-1" />Paid</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Your applications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {applications.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                No applications submitted yet. Unlock a location and apply for an internship.
+              </div>
+            ) : (
+              <div className="divide-y">
+                {applications.map((a) => (
+                  <div key={a.id} className="py-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{a.snapshot?.company_name || "Company"}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        Sent to {a.sent_to_email || "—"} · {new Date(a.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <Badge variant={a.status === "accepted" ? "default" : a.status === "rejected" ? "destructive" : "secondary"} className="capitalize shrink-0">
+                      {a.status}
+                    </Badge>
                   </div>
                 ))}
               </div>

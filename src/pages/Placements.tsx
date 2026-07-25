@@ -163,7 +163,7 @@ const Placements = () => {
         <Header />
         <main className="container mx-auto px-4 pt-32 pb-16 max-w-xl text-center">
           <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h1 className="text-3xl font-serif font-bold mb-2">Sign in to find placements</h1>
+          <h1 className="text-3xl font-display mb-2">Sign in to find placements</h1>
           <p className="text-muted-foreground mb-6">
             You need an account so we can match placements to your department.
           </p>
@@ -181,7 +181,7 @@ const Placements = () => {
       <Header />
       <main className="container mx-auto px-4 pt-28 pb-16 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-serif font-bold mb-2">Find your placement</h1>
+          <h1 className="text-4xl font-display mb-2">Find your placement</h1>
           <p className="text-muted-foreground">
             Pick a state and city relevant to your department. Unlock a city for ₦3,000 to reveal every company's full details.
           </p>

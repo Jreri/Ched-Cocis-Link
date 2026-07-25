@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Save, Upload, CheckCircle2 } from "lucide-react"
+import { Loader2, Save, Upload, CheckCircle2, Trash2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { CANONICAL_FIELDS } from "@/lib/applicationFields"
@@ -89,6 +89,23 @@ const Profile = () => {
       toast.success("Uploaded")
     } catch (e: any) {
       toast.error(e.message || "Upload failed")
+    } finally { setUploadingKey(null) }
+  }
+
+  const removeDoc = async (key: string) => {
+    const path = documents[key]
+    if (!path) return
+    if (!confirm("Remove this document?")) return
+    setUploadingKey(key)
+    try {
+      await supabase.storage.from("applicant-documents").remove([path])
+      const next = { ...documents }
+      delete next[key]
+      setDocuments(next)
+      await supabase.from("profiles").update({ documents: next }).eq("id", uid)
+      toast.success("Removed")
+    } catch (e: any) {
+      toast.error(e.message || "Remove failed")
     } finally { setUploadingKey(null) }
   }
 
@@ -182,6 +199,11 @@ const Profile = () => {
                       </span>
                     </Button>
                   </label>
+                  {uploaded && (
+                    <Button size="sm" variant="ghost" onClick={() => removeDoc(f.key)} disabled={uploadingKey === f.key} aria-label="Remove document">
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  )}
                 </div>
               )
             })}

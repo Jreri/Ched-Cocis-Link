@@ -34,8 +34,10 @@ const Auth = () => {
   })
 
   useEffect(() => {
-    document.title = "Sign in — StudentPlace Nigeria"
+    document.title = "Sign in — ChedLink"
   }, [])
+
+  const [deptsLoading, setDeptsLoading] = useState(true)
 
   // Redirect if already logged in
   useEffect(() => {
@@ -51,12 +53,17 @@ const Auth = () => {
   }, [navigate])
 
   useEffect(() => {
-    supabase
-      .from("departments")
-      .select("id,name")
-      .eq("is_active", true)
-      .order("name")
-      .then(({ data }) => setDepartments((data as Department[]) || []))
+    ;(async () => {
+      setDeptsLoading(true)
+      const { data, error } = await supabase
+        .from("departments")
+        .select("id,name")
+        .eq("is_active", true)
+        .order("name")
+      if (error) toast.error(error.message)
+      setDepartments((data as Department[]) || [])
+      setDeptsLoading(false)
+    })()
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -113,7 +120,8 @@ const Auth = () => {
       <main className="py-20">
         <div className="container mx-auto px-4 max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-serif font-bold">Welcome to StudentPlace</h1>
+            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">ChedLink · CCL</div>
+            <h1 className="text-3xl font-display">Welcome to ChedLink</h1>
             <p className="text-muted-foreground mt-2">Find IT/SIWES placements matched to your department.</p>
           </div>
 
@@ -162,6 +170,11 @@ const Auth = () => {
                     {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Sign in
                   </Button>
+                  <div className="text-center">
+                    <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-ink underline">
+                      Forgot your password?
+                    </Link>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -198,11 +211,11 @@ const Auth = () => {
                   </div>
                   <div>
                     <Label>Department</Label>
-                    <Select value={reg.departmentId} onValueChange={(v) => setReg((s) => ({ ...s, departmentId: v }))}>
+                    <Select value={reg.departmentId} onValueChange={(v) => setReg((s) => ({ ...s, departmentId: v }))} disabled={deptsLoading || departments.length === 0}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your department" />
+                        <SelectValue placeholder={deptsLoading ? "Loading departments…" : departments.length === 0 ? "No departments available" : "Select your department"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[70] bg-popover max-h-64">
                         {departments.map((d) => (
                           <SelectItem key={d.id} value={d.id}>
                             {d.name}
@@ -210,6 +223,11 @@ const Auth = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    {!deptsLoading && departments.length === 0 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Departments haven't been set up yet. <Link to="/contact" className="underline">Contact support</Link>.
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="rg-pw">Password</Label>
