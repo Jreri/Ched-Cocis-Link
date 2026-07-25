@@ -393,10 +393,16 @@ export default function Admin() {
               <Field label="Instructions for applicants">
                 <Textarea value={form.instructions} rows={3} placeholder="Any special notes shown to applicants." onChange={e => setForm({ ...form, instructions: e.target.value })} />
               </Field>
-              <label className="flex items-center gap-2 text-sm mt-2">
-                <Checkbox checked={form.applications_enabled} onCheckedChange={v => setForm({ ...form, applications_enabled: !!v })} />
-                <span>Accept applications</span>
-              </label>
+              <div className="flex items-center gap-4 mt-2 flex-wrap">
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={form.applications_enabled} onCheckedChange={v => setForm({ ...form, applications_enabled: !!v })} />
+                  <span>Accept applications</span>
+                </label>
+                <div className="flex items-center gap-2 text-sm">
+                  <Label className="mb-0">Slots</Label>
+                  <Input type="number" min={0} value={form.slots} onChange={e => setForm({ ...form, slots: e.target.value })} className="w-24 h-8" placeholder="—" />
+                </div>
+              </div>
             </div>
 
             <div className="border-t border-border pt-4">
