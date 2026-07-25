@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers } from "lucide-react"
+import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText } from "lucide-react"
 import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
 
 type Company = {
@@ -31,6 +31,7 @@ type Company = {
   internship_position: string | null
   instructions: string | null
   applications_enabled: boolean | null
+  slots: number | null
   is_active: boolean
 }
 
@@ -51,6 +52,7 @@ const emptyForm = {
   internship_position: "",
   instructions: "",
   applications_enabled: true,
+  slots: "" as string,
   is_active: true,
   department_ids: [] as string[],
   requirements: {} as Record<string, FieldReq | "default">,
@@ -159,6 +161,7 @@ export default function Admin() {
       internship_position: c.internship_position || "",
       instructions: c.instructions || "",
       applications_enabled: c.applications_enabled !== false,
+      slots: c.slots != null ? String(c.slots) : "",
       is_active: c.is_active,
       department_ids: companyDepts[c.id] || [],
       requirements: req,
@@ -187,6 +190,7 @@ export default function Admin() {
         internship_position: form.internship_position.trim() || null,
         instructions: form.instructions.trim() || null,
         applications_enabled: form.applications_enabled,
+        slots: form.slots.trim() ? Number(form.slots) : null,
         is_active: form.is_active,
       }
       let companyId = form.id
@@ -264,9 +268,14 @@ export default function Admin() {
             <h1 className="font-display text-4xl md:text-5xl text-ink">Companies</h1>
             <p className="text-muted-foreground mt-2">Manage the placement directory. Changes appear instantly for students.</p>
           </div>
-          <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
-            <Plus className="w-4 h-4" /> Add company
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="rounded-full gap-2">
+              <Link to="/admin/applications"><FileText className="w-4 h-4" /> Applications</Link>
+            </Button>
+            <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
+              <Plus className="w-4 h-4" /> Add company
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
