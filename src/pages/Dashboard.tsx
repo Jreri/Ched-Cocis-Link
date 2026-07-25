@@ -27,7 +27,7 @@ const Dashboard = () => {
   const [unlocked, setUnlocked] = useState<Unlocked[]>([])
 
   useEffect(() => {
-    document.title = "Dashboard — StudentPlace Nigeria"
+    document.title = "Dashboard — ChedLink"
   }, [])
 
   useEffect(() => {
@@ -90,10 +90,11 @@ const Dashboard = () => {
       <main className="flex-1 container mx-auto px-4 py-24 md:py-28 max-w-6xl">
         <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl md:text-4xl font-display">
-              Hi{profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""} 👋
+            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Dashboard</div>
+            <h1 className="text-3xl md:text-4xl font-display text-ink">
+              {profile?.full_name ? profile.full_name.split(" ")[0] : "Welcome"}
             </h1>
-            <p className="text-muted-foreground mt-1">Your placement dashboard.</p>
+            <p className="text-muted-foreground mt-1">Your placement activity at a glance.</p>
           </div>
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link to="/profile">Edit profile</Link></Button>
