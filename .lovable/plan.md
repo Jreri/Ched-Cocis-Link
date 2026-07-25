@@ -1,56 +1,69 @@
-## ChedLink (CCL) — Implementation Plan
 
-Big rebrand + new application flow. Breaking into phases so we can ship and verify each safely.
+## ChedLink cleanup + completion plan
 
-### Phase 1 — Branding & Sidebar/Nav Fix
-- Rename to **ChedLink** (CCL) — "In collaboration with COCIS" across Header, Footer, Hero, About, index.html title/meta, auth pages.
-- Replace mobile menu with a proper opaque drawer: solid `bg-background`, shadow, dark backdrop overlay, `body` scroll lock while open, close on backdrop click / route change.
-- Hide "Admin" link from header entirely (see Phase 5).
+Five clusters, done in this order so each phase leaves the app in a working state.
 
-### Phase 2 — Database schema for applications
-Migration adds:
-- `companies`: `internship_email text`, `internship_position text`, `instructions text`, `slots int`, `applications_enabled bool default true`.
-- `company_requirements(company_id, field_key, kind [document|info|custom], label, requirement [required|optional|hidden], sort_order)` with admin-only RLS + `authenticated SELECT` so applicants can read the config for companies they've unlocked.
-- Extend `profiles`: `phone, address, date_of_birth, matric_number, university, internship_duration, preferred_start_date, expected_end_date` (keep existing `institution`/`level`).
-- `applications(id, user_id, company_id, snapshot jsonb, status, created_at)` — RLS: user owns their rows, admin sees all.
-- Private storage bucket `applicant-documents` with RLS keyed to `auth.uid()` folder prefix.
-- Seed a canonical set of `field_key`s (passport, gov_id, siwes_letter, student_id, waec, birth_cert, cv, full_name, phone, email, address, dob, university, department, level, matric_number, duration, start_date, end_date) so admin UI can toggle per company.
+### 1. Rebrand & visual bug cleanup
 
-### Phase 3 — Profile (auto-fill source of truth)
-- Expand `/profile` with all Personal / Academic / Internship fields + document uploads to Storage. Store paths on profile so future applications reuse them.
+- `src/pages/Dashboard.tsx`: title → "Dashboard — ChedLink"; drop the 👋 to match editorial tone.
+- `src/pages/Auth.tsx`: title → "Sign in — ChedLink"; heading + copy → ChedLink / CCL wording.
+- `src/pages/Placements.tsx`: replace `font-serif` classes with `font-display` used across the rebrand.
+- `src/components/Header.tsx`: when the signed-in user has the `admin` role (checked via `has_role` RPC), show a subtle `Admin` link in the desktop nav + drawer. Also register a global `Ctrl+Shift+A` shortcut that navigates to `/admin` (works for anyone; the page itself is already role-gated).
 
-### Phase 4 — Apply flow
-- In `Placements`, each company card gets **Apply for Internship** → `/apply/:companyId`.
-- `/apply/:companyId` page:
-  - Loads company + its `company_requirements` (only fields not `hidden`).
-  - Prefills every info field from `profiles`; user can edit before submit.
-  - Shows only the document slots the company requires/allows; reuses profile documents if already uploaded, else lets user upload now (writes back to profile too).
-  - Client + server validation of `required` fields.
-  - On submit → edge function `submit-application`:
-    - Re-validates against requirements.
-    - Generates signed URLs (7-day) for each attached document.
-    - Sends email via Resend to `companies.internship_email` with subject **"Ched-COCIS Link: Intern Application"**, HTML body with applicant details + document links.
-    - Inserts row into `applications`.
-  - Dashboard shows submitted applications list.
+### 2. Register — department dropdown fix
 
-Requires `RESEND_API_KEY` — I'll request it when we reach this phase. Attachments go as signed links (Resend attachment size + our storage make direct attach unreliable at scale; links are professional and standard).
+Current bug: on `/register`, the department Select is populated by a `.then` on a Supabase promise that Supabase JS actually returns as a thenable but not a real Promise — combined with Radix Select mounting inside a portal, users have reported the list looks empty or the selected value doesn't stick.
 
-### Phase 5 — Admin
-- Hide `/admin` from all nav. Add secret access: 5 clicks on the footer "CCL" mark within 2s opens a modal login (uses normal `supabase.auth.signInWithPassword`, then checks `has_role(admin)`); also keyboard combo `Ctrl+Shift+A`.
-- Extend `/admin` company dialog:
-  - New fields: `internship_email`, `internship_position`, `instructions`, `slots`, `applications_enabled`, `logo_url`.
-  - Requirements editor: table of all canonical fields with a Required / Optional / Hidden radio per field + "Add custom requirement" rows.
-- Seed the specified admin account: since we can't set a password server-side without the user creating it, I'll create the auth user via a one-off `supabase.auth.admin` call inside a temporary edge function, then grant `admin` role. (Alternative: user signs up with that email themselves and the first-user-becomes-admin trigger already handles it — that trigger currently exists, so if no admin has signed up yet, signing up with `ikoroeric2@gmail.com / Nwabueze1#` auto-promotes. I'll confirm state and pick the right path.)
+Fix in `src/pages/Auth.tsx`:
+- Rewrite the fetch as `useEffect(() => { (async () => { const { data } = await supabase.from("departments")…; setDepartments(data ?? []) })() }, [])`.
+- Add a loading state so the trigger shows "Loading departments…" until the list arrives, and a fallback message if the list is empty (with a link to Contact).
+- Ensure `SelectContent` has `className="z-[70] bg-popover"` so it renders above the auth card on mobile.
+- Confirm the selected `departmentId` survives tab switch between Sign in / Create account.
 
-### Phase 6 — Polish
-- Loading/empty states across new pages, mobile spacing pass, breadcrumbs on Apply/Profile.
+### 3. Applications on Dashboard + Admin
+
+**Dashboard** (`src/pages/Dashboard.tsx`)
+- Add a "Your applications" section below unlocked locations.
+- Query: `applications` joined to `companies` for name/city/state; ordered by `created_at desc`, limited to 10.
+- Show company, position (from snapshot), sent-to email, status badge, submitted date.
+
+**Admin** (new route + page)
+- Add `/admin/applications` route in `src/App.tsx`.
+- New file `src/pages/AdminApplications.tsx` with the same admin gate as `Admin.tsx`.
+- Table: applicant name/email, company, state/city, status, submitted date, expandable row with the snapshot info + document links (generated via signed URLs from an existing or new edge function).
+- Status dropdown to update `applications.status` between `sent`, `reviewed`, `accepted`, `rejected`.
+- Add a link to `/admin/applications` from the main `/admin` header.
+
+Schema/DB:
+- Add `UPDATE` policy on `applications` for admins only.
+- Add a small edge function `application-docs` that admins call with an application id and it returns signed URLs for that application's documents (7-day). Avoids exposing storage paths directly.
+
+### 4. Email deliverability
+
+`submit-application` currently uses `from: "ChedLink <onboarding@resend.dev>"`, which only delivers to the Resend account owner. Two paths:
+
+- **Recommended**: switch to Lovable Emails. Run `email_domain--check_email_domain_status`, then if no domain is set up, present the email setup dialog. Rewrite `submit-application` to call `send-transactional-email` with a new `intern-application` React Email template that renders the same content (applicant info table + signed doc links). Registered subject "Ched-COCIS Link: Intern Application".
+- **Alternative** (only if the user prefers Resend): request they add a verified domain in Resend, then swap the `from` to `applications@<their-domain>`.
+
+Will do Lovable Emails by default; user can override in-thread.
+
+### 5. Admin completeness
+
+- **Departments CRUD** — new tab/section in `/admin`: list existing departments, add, rename, toggle `is_active`. All admin-only via existing `has_role` policies.
+- **Slots** — expose `companies.slots` in the Admin dialog (`Field label="Slots"`, numeric).
+- **Logo upload** — replace the freeform `logo_url` with a file input that uploads to a new public `company-logos` bucket via `storage_create_bucket`, stores the resulting public URL.
+- **Password reset** — add `Forgot password?` link on Auth page → new `/forgot-password` page (`resetPasswordForEmail` with `redirectTo: /reset-password`) + `/reset-password` page that calls `updateUser({ password })`.
+- **Delete document** in `Profile.tsx` — trash icon next to each uploaded doc; removes from storage and from `profiles.documents`.
 
 ### Technical notes
-- Email provider: **Resend** via connector (no domain setup pain, matches spec's professional email). Alternative if you'd rather use Lovable Emails: I can swap — same edge function, different transport.
-- Documents: private bucket + signed URLs in the email (not raw attachments) so files stay auth-gated and email size stays small.
-- The existing `has_role`/`user_roles` pattern stays — no role storage on profiles.
 
-### Confirmations needed before I start
-1. **Email provider**: Resend (recommended) or Lovable Emails?
-2. **Documents in email**: signed download links (recommended) or actual attached files?
-3. **Admin seeding**: OK for me to create the auth user server-side with the given password, or would you prefer to sign up with that email yourself (auto-promoted to admin since none exists)?
+- All new SQL goes through the migration tool; grants + RLS included per house rules.
+- No changes to `src/integrations/supabase/client.ts` or `types.ts`.
+- Ship in the order above; after each cluster the app remains fully functional.
+- Not touching design tokens or the Midnight Indigo palette.
+
+### Not in scope (call out for later)
+
+- Admin "resend application" button.
+- Duplicate-submission prevention (would need a unique index on `(user_id, company_id)` — needs a product call because users may legitimately reapply).
+- Breadcrumbs and skeleton loaders — polish pass after the above lands.
