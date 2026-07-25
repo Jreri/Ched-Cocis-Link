@@ -17,6 +17,9 @@ import Placements from "./pages/Placements";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Apply from "./pages/Apply";
+import AdminApplications from "./pages/AdminApplications";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +43,10 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/applications" element={<AdminApplications />} />
           <Route path="/apply/:companyId" element={<Apply />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
