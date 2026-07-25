@@ -5,7 +5,7 @@ import Footer from "@/components/Footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, MapPin, User, Unlock, ArrowRight } from "lucide-react"
+import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 
@@ -17,6 +17,14 @@ type Profile = {
   phone: string | null
 }
 type Unlocked = { state: string; city: string; paid_at: string; company_count: number }
+type Application = {
+  id: string
+  company_id: string
+  status: string
+  sent_to_email: string | null
+  created_at: string
+  snapshot: { company_name?: string; info?: Record<string, string> } | null
+}
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -30,6 +38,8 @@ const Dashboard = () => {
     document.title = "Dashboard — ChedLink"
   }, [])
 
+  const [applications, setApplications] = useState<Application[]>([])
+
   useEffect(() => {
     ;(async () => {
       const { data: sess } = await supabase.auth.getSession()
@@ -42,9 +52,10 @@ const Dashboard = () => {
       const meta = (user.user_metadata || {}) as Record<string, string | null>
 
       const uid = user.id
-      const [{ data: prof }, { data: locs }] = await Promise.all([
+      const [{ data: prof }, { data: locs }, { data: apps }] = await Promise.all([
         supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
         supabase.rpc("get_my_unlocked_locations"),
+        supabase.from("applications").select("id, company_id, status, sent_to_email, created_at, snapshot").eq("user_id", uid).order("created_at", { ascending: false }).limit(10),
       ])
 
       // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
@@ -57,6 +68,7 @@ const Dashboard = () => {
       }
       setProfile(merged)
       setUnlocked((locs as Unlocked[]) || [])
+      setApplications((apps as Application[]) || [])
 
       if (merged.department_id) {
         const { data: dept } = await supabase
