@@ -177,6 +177,35 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Your applications</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {applications.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                No applications submitted yet. Unlock a location and apply for an internship.
+              </div>
+            ) : (
+              <div className="divide-y">
+                {applications.map((a) => (
+                  <div key={a.id} className="py-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{a.snapshot?.company_name || "Company"}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        Sent to {a.sent_to_email || "—"} · {new Date(a.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <Badge variant={a.status === "accepted" ? "default" : a.status === "rejected" ? "destructive" : "secondary"} className="capitalize shrink-0">
+                      {a.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </main>
       <Footer />
     </div>
