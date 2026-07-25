@@ -15,6 +15,7 @@ const Header = () => {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [authed, setAuthed] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -36,11 +37,34 @@ const Header = () => {
     }
   }, [open])
 
+  const checkAdmin = async (uid: string) => {
+    const { data } = await supabase.rpc("has_role", { _user_id: uid, _role: "admin" })
+    setIsAdmin(!!data)
+  }
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session))
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s))
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthed(!!data.session)
+      if (data.session) checkAdmin(data.session.user.id)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setAuthed(!!s)
+      if (s) checkAdmin(s.user.id); else setIsAdmin(false)
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
+
+  // Ctrl+Shift+A opens /admin (page is role-gated)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+        e.preventDefault()
+        navigate("/admin")
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [navigate])
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -80,6 +104,7 @@ const Header = () => {
               <>
                 <Link to="/dashboard"><Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button></Link>
                 <Link to="/profile"><Button variant="ghost" size="sm" className="rounded-full">Profile</Button></Link>
+                {isAdmin && <Link to="/admin"><Button variant="ghost" size="sm" className="rounded-full text-accent">Admin</Button></Link>}
                 <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
               </>
             ) : (
@@ -124,6 +149,7 @@ const Header = () => {
                   <>
                     <Link to="/dashboard"><Button variant="ghost" className="w-full justify-start rounded-lg">Dashboard</Button></Link>
                     <Link to="/profile"><Button variant="ghost" className="w-full justify-start rounded-lg">Profile</Button></Link>
+                    {isAdmin && <Link to="/admin"><Button variant="ghost" className="w-full justify-start rounded-lg text-accent">Admin</Button></Link>}
                     <Button onClick={signOut} className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
                   </>
                 ) : (
