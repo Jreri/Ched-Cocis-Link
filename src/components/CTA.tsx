@@ -37,16 +37,15 @@ const CTA = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-4 grid grid-cols-2 gap-4">
+            <div className="lg:col-span-4 grid gap-4">
               {[
-                { n: "500+", l: "Verified companies" },
-                { n: "10K+", l: "Students placed" },
-                { n: "36", l: "States covered" },
-                { n: "95%", l: "Success rate" },
+                { t: "Department-matched", d: "Only see placements relevant to your field of study." },
+                { t: "Unlock by city", d: "Pay once per city to reveal every verified company inside it." },
+                { t: "One-tap apply", d: "Auto-fill your profile and documents into every application." },
               ].map((s, i) => (
-                <div key={i} className="rounded-2xl border border-primary-foreground/15 bg-primary-foreground/[0.03] p-6 backdrop-blur">
-                  <div className="font-display text-4xl md:text-5xl text-primary-foreground">{s.n}</div>
-                  <div className="text-xs uppercase tracking-[0.15em] text-primary-foreground/60 mt-2">{s.l}</div>
+                <div key={i} className="rounded-2xl border border-primary-foreground/15 bg-primary-foreground/[0.03] p-5 backdrop-blur">
+                  <div className="font-display text-lg text-primary-foreground">{s.t}</div>
+                  <div className="text-xs text-primary-foreground/60 mt-1 leading-relaxed">{s.d}</div>
                 </div>
               ))}
             </div>
