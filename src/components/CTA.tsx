@@ -20,7 +20,7 @@ const CTA = () => {
                 <span className="italic text-accent"> shapes</span> everything after.
               </h2>
               <p className="mt-8 text-lg text-primary-foreground/70 max-w-xl">
-                Join thousands of Nigerian students who have already secured meaningful IT, SIWES and graduate placements through StudentPlace.
+                Join Nigerian students securing IT, SIWES and graduate placements through ChedLink.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-3">
