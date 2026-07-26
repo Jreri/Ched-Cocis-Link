@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/enhanced-button"
-import { ArrowUpRight, MapPin, Sparkles, Star } from "lucide-react"
+import { ArrowUpRight, MapPin, Sparkles } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const Hero = () => {
