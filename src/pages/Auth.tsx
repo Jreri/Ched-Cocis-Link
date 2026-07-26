@@ -39,17 +39,23 @@ const Auth = () => {
 
   const [deptsLoading, setDeptsLoading] = useState(true)
 
+  const redirectByRole = async (userId: string) => {
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" })
+    navigate(isAdmin ? "/admin" : "/dashboard", { replace: true })
+  }
+
   // Redirect if already logged in
   useEffect(() => {
     let unsub: (() => void) | undefined
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/placements", { replace: true })
+      if (data.session) redirectByRole(data.session.user.id)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (session) navigate("/placements", { replace: true })
+      if (session) redirectByRole(session.user.id)
     })
     unsub = () => sub.subscription.unsubscribe()
     return () => unsub?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate])
 
   useEffect(() => {
@@ -69,7 +75,7 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: login.email.trim(),
       password: login.password,
     })
@@ -79,7 +85,7 @@ const Auth = () => {
       return
     }
     toast.success("Welcome back")
-    navigate("/placements", { replace: true })
+    if (data.user) await redirectByRole(data.user.id)
   }
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -93,7 +99,7 @@ const Auth = () => {
       email: reg.email.trim(),
       password: reg.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/placements`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: reg.fullName.trim(),
           department_id: reg.departmentId,
@@ -105,9 +111,9 @@ const Auth = () => {
       toast.error(error.message)
       return
     }
-    if (data.session) {
+    if (data.session && data.user) {
       toast.success("Account created")
-      navigate("/placements", { replace: true })
+      await redirectByRole(data.user.id)
     } else {
       toast.success("Account created — check your inbox to confirm your email, then sign in.")
       setTab("login")

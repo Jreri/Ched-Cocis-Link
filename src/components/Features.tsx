@@ -53,7 +53,7 @@ const Features = () => {
               <Users className="w-8 h-8 mb-8 text-accent" />
               <h3 className="font-display text-3xl md:text-4xl mb-4">For students</h3>
               <p className="text-primary-foreground/70 mb-8 max-w-md">
-                Access 500+ verified companies, track applications and manage documents from one calm dashboard.
+                Browse verified companies, track applications and manage documents from one calm dashboard.
               </p>
               <div className="inline-flex items-center gap-2 text-sm border-b border-primary-foreground/30 pb-1 group-hover:border-accent group-hover:text-accent transition-colors">
                 Create account <ArrowUpRight className="w-4 h-4" />

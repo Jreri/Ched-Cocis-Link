@@ -180,10 +180,14 @@ const Placements = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 pt-28 pb-16 max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-display mb-2">Find your placement</h1>
-          <p className="text-muted-foreground">
-            Pick a state and city relevant to your department. Unlock a city for ₦3,000 to reveal every company's full details.
+        <div className="mb-10">
+          <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
+            Placements
+          </div>
+          <h1 className="text-4xl md:text-5xl font-display text-ink mb-3">Find your placement</h1>
+          <p className="text-muted-foreground max-w-2xl">
+            Pick a state and a city relevant to your department. Unlock a city for ₦3,000 to
+            reveal every company's full details.
           </p>
         </div>
 
@@ -193,64 +197,96 @@ const Placements = () => {
           </div>
         )}
 
+        {/* Selection breadcrumb */}
+        {(selectedState || viewingCity) && (
+          <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Viewing:</span>
+            {selectedState && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-ink text-primary-foreground font-medium">
+                <MapPin className="h-3.5 w-3.5" /> {selectedState}
+              </span>
+            )}
+            {viewingCity && (
+              <>
+                <span className="text-muted-foreground">›</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground font-medium">
+                  {viewingCity.city}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* States */}
-          <Card className="lg:col-span-1 h-fit">
+          {/* States — left */}
+          <Card className="lg:col-span-1 h-fit lg:sticky lg:top-24">
             <CardHeader>
-              <CardTitle className="text-lg">States ({states.length})</CardTitle>
+              <CardTitle className="text-sm uppercase tracking-[0.15em] text-muted-foreground">
+                States ({states.length})
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-1.5">
               {states.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  No placements matched your department yet. Make sure your profile has a department set.
+                  No placements matched your department yet. Make sure your profile has a
+                  department set.
                 </p>
               )}
               {states.map((s) => (
                 <button
                   key={s.state}
                   onClick={() => openState(s.state)}
-                  className={`w-full text-left px-3 py-2 rounded-md border transition ${
+                  className={`w-full text-left px-3 py-2.5 rounded-lg border transition-all ${
                     selectedState === s.state
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:bg-muted border-border"
+                      ? "bg-ink text-primary-foreground border-ink shadow-sm"
+                      : "hover:bg-muted border-transparent"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 font-medium">
-                      <MapPin className="h-4 w-4" /> {s.state}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2 font-medium truncate">
+                      <MapPin className="h-4 w-4 shrink-0" /> {s.state}
                     </span>
-                    <Badge variant="secondary">{s.placement_count}</Badge>
+                    <Badge
+                      variant={selectedState === s.state ? "secondary" : "outline"}
+                      className="shrink-0"
+                    >
+                      {s.placement_count}
+                    </Badge>
                   </div>
                 </button>
               ))}
             </CardContent>
           </Card>
 
-          {/* Cities + companies */}
+          {/* Cities + companies — right */}
           <div className="lg:col-span-2 space-y-6">
             {!selectedState && (
               <Card>
-                <CardContent className="py-16 text-center text-muted-foreground">
-                  Select a state to see cities you can unlock.
+                <CardContent className="py-20 text-center text-muted-foreground">
+                  <MapPin className="h-8 w-8 mx-auto mb-3 opacity-40" />
+                  Select a state from the left to see cities you can unlock.
                 </CardContent>
               </Card>
             )}
 
             {selectedState && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Cities in {selectedState}
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg font-display">
+                    Cities in <span className="text-primary">{selectedState}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-3">
                   {cities.map((c) => {
                     const isUnlocked = unlocked.has(key(selectedState, c.city));
+                    const isViewing = viewingCity?.state === selectedState && viewingCity?.city === c.city;
                     const k = key(selectedState, c.city);
                     return (
                       <div
                         key={c.city}
-                        className="p-4 rounded-lg border bg-card flex flex-col gap-3"
+                        className={`p-4 rounded-lg border bg-card flex flex-col gap-3 transition-all ${
+                          isViewing ? "border-primary ring-2 ring-primary/20" : ""
+                        }`}
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -272,10 +308,10 @@ const Placements = () => {
                         {isUnlocked ? (
                           <Button
                             size="sm"
-                            variant="secondary"
+                            variant={isViewing ? "default" : "secondary"}
                             onClick={() => viewCompanies(selectedState, c.city)}
                           >
-                            View companies
+                            {isViewing ? "Viewing" : "View companies"}
                           </Button>
                         ) : (
                           <Button
@@ -294,7 +330,7 @@ const Placements = () => {
                     );
                   })}
                   {cities.length === 0 && (
-                    <p className="text-sm text-muted-foreground col-span-full">
+                    <p className="text-sm text-muted-foreground col-span-full py-6 text-center">
                       No cities available for your department here.
                     </p>
                   )}

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/enhanced-button"
-import { ArrowUpRight, MapPin, Sparkles, Star } from "lucide-react"
+import { ArrowUpRight, MapPin, Sparkles } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const Hero = () => {
@@ -40,19 +40,10 @@ const Hero = () => {
               </Link>
             </div>
 
-            <div className="mt-12 flex items-center gap-6">
-              <div className="flex -space-x-2">
-                {["bg-primary","bg-accent","bg-secondary","bg-ink"].map((c,i) => (
-                  <div key={i} className={`w-9 h-9 rounded-full ${c} border-2 border-background`} />
-                ))}
-              </div>
-              <div>
-                <div className="flex items-center gap-1 text-accent">
-                  {[...Array(5)].map((_,i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  <span className="text-ink font-medium">10,000+</span> students placed this year
-                </p>
+            <div className="mt-12 flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Nationwide coverage across Nigerian states
               </div>
             </div>
           </div>
@@ -77,44 +68,11 @@ const Hero = () => {
                     <MapPin className="w-4 h-4" /> 36 states · 774 LGAs
                   </div>
                   <div className="h-px bg-primary-foreground/20" />
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <div className="font-display text-2xl">500+</div>
-                      <div className="text-[10px] uppercase tracking-wider text-primary-foreground/60">Firms</div>
-                    </div>
-                    <div>
-                      <div className="font-display text-2xl">36</div>
-                      <div className="text-[10px] uppercase tracking-wider text-primary-foreground/60">States</div>
-                    </div>
-                    <div>
-                      <div className="font-display text-2xl">95%</div>
-                      <div className="text-[10px] uppercase tracking-wider text-primary-foreground/60">Match</div>
-                    </div>
-                  </div>
+                  <p className="text-sm text-primary-foreground/70 leading-relaxed">
+                    A calmer path from application to placement — matched to your
+                    department, unlocked city by city.
+                  </p>
                 </div>
-              </div>
-
-              {/* Floating chip — top left */}
-              <div className="absolute -top-6 -left-6 bg-background border border-border rounded-2xl shadow-medium p-4 w-52 animate-fade-in" style={{ animationDelay: "0.4s" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                    <span className="font-display text-lg text-ink">A</span>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground">Applied to</div>
-                    <div className="text-sm font-medium text-ink truncate">Andela Nigeria</div>
-                  </div>
-                </div>
-                <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-primary rounded-full" />
-                </div>
-              </div>
-
-              {/* Floating chip — bottom right */}
-              <div className="absolute -bottom-6 -right-4 bg-background border border-border rounded-2xl shadow-medium p-4 w-56 animate-fade-in" style={{ animationDelay: "0.55s" }}>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Interview scheduled</div>
-                <div className="font-display text-lg text-ink mt-1">MTN · Lagos</div>
-                <div className="text-xs text-muted-foreground mt-1">Fri · 10:30 AM WAT</div>
               </div>
             </div>
           </div>
