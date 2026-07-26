@@ -40,19 +40,10 @@ const Hero = () => {
               </Link>
             </div>
 
-            <div className="mt-12 flex items-center gap-6">
-              <div className="flex -space-x-2">
-                {["bg-primary","bg-accent","bg-secondary","bg-ink"].map((c,i) => (
-                  <div key={i} className={`w-9 h-9 rounded-full ${c} border-2 border-background`} />
-                ))}
-              </div>
-              <div>
-                <div className="flex items-center gap-1 text-accent">
-                  {[...Array(5)].map((_,i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  <span className="text-ink font-medium">10,000+</span> students placed this year
-                </p>
+            <div className="mt-12 flex items-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary" />
+                Nationwide coverage across Nigerian states
               </div>
             </div>
           </div>
