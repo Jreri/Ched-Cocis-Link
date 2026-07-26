@@ -99,7 +99,7 @@ const Auth = () => {
       email: reg.email.trim(),
       password: reg.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/placements`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: reg.fullName.trim(),
           department_id: reg.departmentId,
@@ -111,9 +111,9 @@ const Auth = () => {
       toast.error(error.message)
       return
     }
-    if (data.session) {
+    if (data.session && data.user) {
       toast.success("Account created")
-      navigate("/placements", { replace: true })
+      await redirectByRole(data.user.id)
     } else {
       toast.success("Account created — check your inbox to confirm your email, then sign in.")
       setTab("login")
