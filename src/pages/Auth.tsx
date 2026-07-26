@@ -39,17 +39,23 @@ const Auth = () => {
 
   const [deptsLoading, setDeptsLoading] = useState(true)
 
+  const redirectByRole = async (userId: string) => {
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" })
+    navigate(isAdmin ? "/admin" : "/dashboard", { replace: true })
+  }
+
   // Redirect if already logged in
   useEffect(() => {
     let unsub: (() => void) | undefined
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/placements", { replace: true })
+      if (data.session) redirectByRole(data.session.user.id)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (session) navigate("/placements", { replace: true })
+      if (session) redirectByRole(session.user.id)
     })
     unsub = () => sub.subscription.unsubscribe()
     return () => unsub?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate])
 
   useEffect(() => {
