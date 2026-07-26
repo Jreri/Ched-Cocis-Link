@@ -100,60 +100,101 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-24 md:py-28 max-w-6xl">
-        <div className="flex items-start justify-between mb-8 gap-4 flex-wrap">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-10 gap-4 flex-wrap">
           <div>
-            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Dashboard</div>
-            <h1 className="text-3xl md:text-4xl font-display text-ink">
-              {profile?.full_name ? profile.full_name.split(" ")[0] : "Welcome"}
+            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">
+              Dashboard
+            </div>
+            <h1 className="text-4xl md:text-5xl font-display text-ink leading-tight">
+              {profile?.full_name ? `Welcome back, ${profile.full_name.split(" ")[0]}` : "Welcome"}
             </h1>
-            <p className="text-muted-foreground mt-1">Your placement activity at a glance.</p>
+            <p className="text-muted-foreground mt-2">
+              Your placement activity at a glance.
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button asChild variant="outline"><Link to="/profile">Edit profile</Link></Button>
-            <Button variant="outline" onClick={signOut}>Sign out</Button>
+            <Button asChild size="sm">
+              <Link to="/placements">Find placements <ArrowRight className="w-4 h-4 ml-1" /></Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/profile">Edit profile</Link>
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut}>Sign out</Button>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Snapshot cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground flex items-center gap-2"><User className="w-4 h-4" />Account</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-[0.15em] text-muted-foreground flex items-center gap-2">
+                <User className="w-3.5 h-3.5" />Account
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="font-medium truncate">{profile?.full_name || "—"}</div>
               <div className="text-xs text-muted-foreground truncate">{email}</div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Department</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Department</CardTitle>
+            </CardHeader>
             <CardContent>
-              <div className="font-medium truncate">{departmentName || <Link to="/profile" className="text-primary underline">Set now</Link>}</div>
+              <div className="font-medium truncate">
+                {departmentName || (
+                  <Link to="/profile" className="text-primary underline">Set now</Link>
+                )}
+              </div>
               {profile?.level && <div className="text-xs text-muted-foreground">{profile.level}</div>}
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Institution</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-[0.15em] text-muted-foreground">Institution</CardTitle>
+            </CardHeader>
             <CardContent>
-              <div className="font-medium truncate">{profile?.institution || <Link to="/profile" className="text-primary underline">Add</Link>}</div>
+              <div className="font-medium truncate">
+                {profile?.institution || (
+                  <Link to="/profile" className="text-primary underline">Add</Link>
+                )}
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Locations unlocked</CardTitle></CardHeader>
+          <Card className="bg-ink text-primary-foreground border-ink">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-[0.15em] text-primary-foreground/60">
+                Cities unlocked
+              </CardTitle>
+            </CardHeader>
             <CardContent>
-              <div className="text-3xl font-display">{unlocked.length}</div>
+              <div className="text-4xl font-display">{unlocked.length}</div>
+              <div className="text-xs text-primary-foreground/60 mt-1">
+                {applications.length} application{applications.length === 1 ? "" : "s"} sent
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Your unlocked locations</CardTitle>
-            <Button asChild size="sm">
+        {/* Unlocked cities */}
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <div>
+              <CardTitle className="font-display text-xl">Your unlocked cities</CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                Access companies inside cities you've paid to unlock.
+              </p>
+            </div>
+            <Button asChild size="sm" variant="outline">
               <Link to="/placements">Find more <ArrowRight className="w-4 h-4 ml-1" /></Link>
             </Button>
           </CardHeader>
           <CardContent>
             {unlocked.length === 0 ? (
-              <div className="py-10 text-center text-muted-foreground">
-                <p className="mb-4">You haven't unlocked any locations yet.</p>
+              <div className="py-12 text-center">
+                <MapPin className="w-8 h-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+                <p className="text-muted-foreground mb-4">You haven't unlocked any cities yet.</p>
                 <Button asChild>
                   <Link to="/placements">Browse placements</Link>
                 </Button>
@@ -161,43 +202,71 @@ const Dashboard = () => {
             ) : (
               <div className="grid sm:grid-cols-2 gap-3">
                 {unlocked.map((u) => (
-                  <div key={`${u.state}|${u.city}`} className="p-4 border rounded-lg flex items-center justify-between">
-                    <div>
-                      <div className="font-medium flex items-center gap-2">
-                        <MapPin className="w-4 h-4" /> {u.city}, {u.state}
+                  <Link
+                    key={`${u.state}|${u.city}`}
+                    to="/placements"
+                    className="group p-4 border rounded-lg flex items-center justify-between hover:border-primary hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-semibold flex items-center gap-2 truncate">
+                        <MapPin className="w-4 h-4 shrink-0 text-primary" />
+                        {u.city}
+                        <span className="text-muted-foreground font-normal">· {u.state}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {u.company_count} companies · unlocked {new Date(u.paid_at).toLocaleDateString()}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {u.company_count} companies · since {new Date(u.paid_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <Badge className="bg-emerald-600 hover:bg-emerald-600"><Unlock className="w-3 h-3 mr-1" />Paid</Badge>
-                  </div>
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600 shrink-0">
+                      <Unlock className="w-3 h-3 mr-1" />Paid
+                    </Badge>
+                  </Link>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="mt-6">
+        {/* Applications */}
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5" />Your applications</CardTitle>
+            <CardTitle className="font-display text-xl flex items-center gap-2">
+              <FileText className="w-5 h-5" />Your applications
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Most recent internship applications you've submitted.
+            </p>
           </CardHeader>
           <CardContent>
             {applications.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground text-sm">
-                No applications submitted yet. Unlock a location and apply for an internship.
+              <div className="py-10 text-center">
+                <FileText className="w-8 h-8 mx-auto mb-3 text-muted-foreground opacity-40" />
+                <p className="text-muted-foreground text-sm">
+                  No applications yet. Unlock a city and apply to a company.
+                </p>
               </div>
             ) : (
               <div className="divide-y">
                 {applications.map((a) => (
                   <div key={a.id} className="py-3 flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <div className="font-medium truncate">{a.snapshot?.company_name || "Company"}</div>
+                      <div className="font-medium truncate">
+                        {a.snapshot?.company_name || "Company"}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">
                         Sent to {a.sent_to_email || "—"} · {new Date(a.created_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <Badge variant={a.status === "accepted" ? "default" : a.status === "rejected" ? "destructive" : "secondary"} className="capitalize shrink-0">
+                    <Badge
+                      variant={
+                        a.status === "accepted"
+                          ? "default"
+                          : a.status === "rejected"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                      className="capitalize shrink-0"
+                    >
                       {a.status}
                     </Badge>
                   </div>
