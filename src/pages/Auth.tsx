@@ -75,7 +75,7 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: login.email.trim(),
       password: login.password,
     })
@@ -85,7 +85,7 @@ const Auth = () => {
       return
     }
     toast.success("Welcome back")
-    navigate("/placements", { replace: true })
+    if (data.user) await redirectByRole(data.user.id)
   }
 
   const handleRegister = async (e: React.FormEvent) => {
