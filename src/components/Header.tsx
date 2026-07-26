@@ -102,9 +102,9 @@ const Header = () => {
           <div className="hidden lg:flex items-center gap-2">
             {authed ? (
               <>
-                <Link to="/dashboard"><Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button></Link>
+                <Link to={isAdmin ? "/admin" : "/dashboard"}><Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button></Link>
+                <Link to="/placements"><Button variant="ghost" size="sm" className="rounded-full">Placements</Button></Link>
                 <Link to="/profile"><Button variant="ghost" size="sm" className="rounded-full">Profile</Button></Link>
-                {isAdmin && <Link to="/admin"><Button variant="ghost" size="sm" className="rounded-full text-accent">Admin</Button></Link>}
                 <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
               </>
             ) : (
