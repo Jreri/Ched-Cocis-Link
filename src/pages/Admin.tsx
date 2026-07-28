@@ -286,6 +286,39 @@ export default function Admin() {
           <StatCard icon={<Layers className="w-4 h-4" />} label="Departments" value={departments.length} />
         </div>
 
+        {(() => {
+          const hasCompanies = companies.length > 0
+          const hasActive = stats.active > 0
+          const steps: JourneyStep[] = [
+            {
+              key: "companies",
+              title: "Manage companies",
+              description: "Add, edit, and activate placement partners. Configure slots and requirements.",
+              href: "/admin",
+              cta: "Manage",
+              status: hasCompanies ? "done" : "current",
+            },
+            {
+              key: "activate",
+              title: "Enable applications",
+              description: "Mark companies as active so students can apply from the placements page.",
+              href: "/admin",
+              cta: "Review",
+              status: !hasCompanies ? "todo" : hasActive ? "done" : "current",
+            },
+            {
+              key: "applications",
+              title: "Review applications",
+              description: "Open student submissions, download documents, and update statuses.",
+              href: "/admin/applications",
+              cta: "Open inbox",
+              status: hasActive ? "current" : "todo",
+            },
+          ]
+          return <NextStepsJourney eyebrow="Admin journey" title="Keep the pipeline moving" steps={steps} />
+        })()}
+
+
         <Card className="mb-6">
           <CardContent className="pt-6 flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
