@@ -535,6 +535,20 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   )
 }
 
+function BigStat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: boolean }) {
+  return (
+    <Card className={accent ? "bg-ink text-primary-foreground border-ink" : "border-ink/20"}>
+      <CardContent className="p-6">
+        <div className={`text-[10px] uppercase tracking-[0.25em] mb-3 flex items-center gap-1.5 ${accent ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+          {icon} {label}
+        </div>
+        <div className={`text-5xl md:text-6xl font-display leading-none ${accent ? "" : "text-ink"}`}>{value}</div>
+      </CardContent>
+    </Card>
+  )
+}
+
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><Label className="mb-1.5 block text-sm">{label}</Label>{children}</div>
 }
