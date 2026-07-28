@@ -122,6 +122,7 @@ const Dashboard = () => {
               <Link to="/profile">Edit profile</Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={signOut}>Sign out</Button>
+          </div>
         </div>
 
         {/* Guided journey */}
@@ -174,7 +175,6 @@ const Dashboard = () => {
           return <NextStepsJourney steps={steps} />
         })()}
 
-        </div>
 
         {/* Snapshot cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
