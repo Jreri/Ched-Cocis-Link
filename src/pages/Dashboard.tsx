@@ -122,7 +122,58 @@ const Dashboard = () => {
               <Link to="/profile">Edit profile</Link>
             </Button>
             <Button variant="ghost" size="sm" onClick={signOut}>Sign out</Button>
-          </div>
+        </div>
+
+        {/* Guided journey */}
+        {(() => {
+          const profileComplete = !!(profile?.full_name && profile?.department_id && profile?.institution)
+          const hasUnlocked = unlocked.length > 0
+          const hasApplied = applications.length > 0
+          const steps: JourneyStep[] = [
+            {
+              key: "profile",
+              title: "Complete your profile",
+              description: "Add your name, department and institution so applications auto-fill.",
+              href: "/profile",
+              cta: "Edit profile",
+              status: profileComplete ? "done" : "current",
+            },
+            {
+              key: "find",
+              title: "Find a placement",
+              description: "Browse companies matched to your department across Nigerian cities.",
+              href: "/placements",
+              cta: "Browse placements",
+              status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
+            },
+            {
+              key: "unlock",
+              title: "Unlock a city",
+              description: "Pay ₦3,000 once to reveal every company in that city.",
+              href: "/placements",
+              cta: "Unlock city",
+              status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
+            },
+            {
+              key: "apply",
+              title: "Apply for internship",
+              description: "Submit your one-tap application — we email the company for you.",
+              href: "/placements",
+              cta: "Start applying",
+              status: !hasUnlocked ? "todo" : hasApplied ? "done" : "current",
+            },
+            {
+              key: "track",
+              title: "Track your status",
+              description: "Watch pending, accepted or rejected responses from companies.",
+              href: "/dashboard",
+              cta: "View applications",
+              status: hasApplied ? "current" : "todo",
+            },
+          ]
+          return <NextStepsJourney steps={steps} />
+        })()}
+
         </div>
 
         {/* Snapshot cards */}
