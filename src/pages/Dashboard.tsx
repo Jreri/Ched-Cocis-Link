@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Profile = {
   full_name: string | null
