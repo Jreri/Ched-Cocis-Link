@@ -262,62 +262,89 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-6 pt-32 pb-16 max-w-7xl">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-          <div>
-            <div className="text-[11px] uppercase tracking-[0.25em] text-muted-foreground mb-2">Admin</div>
-            <h1 className="font-display text-4xl md:text-5xl text-ink">Companies</h1>
-            <p className="text-muted-foreground mt-2">Manage the placement directory. Changes appear instantly for students.</p>
+      <main className="container mx-auto px-6 pt-28 md:pt-32 pb-24 max-w-7xl">
+        {/* Page heading */}
+        <header className="mb-12 md:mb-16">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-3">Admin</div>
+              <h1 className="font-display text-4xl md:text-6xl text-ink leading-[1.05] tracking-tight">Companies</h1>
+              <p className="text-muted-foreground mt-4 text-base md:text-lg">
+                Manage the placement directory. Changes appear instantly for students.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="rounded-full gap-2">
+                <Link to="/admin/applications"><FileText className="w-4 h-4" /> Applications</Link>
+              </Button>
+              <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
+                <Plus className="w-4 h-4" /> Add company
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" className="rounded-full gap-2">
-              <Link to="/admin/applications"><FileText className="w-4 h-4" /> Applications</Link>
-            </Button>
-            <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
-              <Plus className="w-4 h-4" /> Add company
-            </Button>
+          <div className="h-px bg-ink/10 mt-10" />
+        </header>
+
+        {/* 1. Next action */}
+        <section className="mb-16">
+          {(() => {
+            const hasCompanies = companies.length > 0
+            const hasActive = stats.active > 0
+            const steps: JourneyStep[] = [
+              {
+                key: "companies",
+                title: "Manage companies",
+                description: "Add, edit, and activate placement partners. Configure slots and requirements.",
+                href: "/admin",
+                cta: "Manage",
+                status: hasCompanies ? "done" : "current",
+              },
+              {
+                key: "activate",
+                title: "Enable applications",
+                description: "Mark companies as active so students can apply from the placements page.",
+                href: "/admin",
+                cta: "Review",
+                status: !hasCompanies ? "todo" : hasActive ? "done" : "current",
+              },
+              {
+                key: "applications",
+                title: "Review applications",
+                description: "Open student submissions, download documents, and update statuses.",
+                href: "/admin/applications",
+                cta: "Open inbox",
+                status: hasActive ? "current" : "todo",
+              },
+            ]
+            return <NextStepsJourney eyebrow="Admin journey" title="Keep the pipeline moving" steps={steps} />
+          })()}
+        </section>
+
+        {/* 2. Snapshot stats — editorial numbers */}
+        <section className="mb-16">
+          <div className="flex items-baseline justify-between mb-6">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Overview</div>
+              <h2 className="font-display text-2xl md:text-3xl text-ink">Directory snapshot</h2>
+            </div>
           </div>
-        </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <BigStat icon={<Building2 className="w-3.5 h-3.5" />} label="Total companies" value={stats.total} accent />
+            <BigStat icon={<Building2 className="w-3.5 h-3.5" />} label="Active" value={stats.active} />
+            <BigStat icon={<MapPin className="w-3.5 h-3.5" />} label="States covered" value={stats.states} />
+            <BigStat icon={<Layers className="w-3.5 h-3.5" />} label="Departments" value={departments.length} />
+          </div>
+        </section>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <StatCard icon={<Building2 className="w-4 h-4" />} label="Total companies" value={stats.total} />
-          <StatCard icon={<Building2 className="w-4 h-4" />} label="Active" value={stats.active} />
-          <StatCard icon={<MapPin className="w-4 h-4" />} label="States covered" value={stats.states} />
-          <StatCard icon={<Layers className="w-4 h-4" />} label="Departments" value={departments.length} />
-        </div>
-
-        {(() => {
-          const hasCompanies = companies.length > 0
-          const hasActive = stats.active > 0
-          const steps: JourneyStep[] = [
-            {
-              key: "companies",
-              title: "Manage companies",
-              description: "Add, edit, and activate placement partners. Configure slots and requirements.",
-              href: "/admin",
-              cta: "Manage",
-              status: hasCompanies ? "done" : "current",
-            },
-            {
-              key: "activate",
-              title: "Enable applications",
-              description: "Mark companies as active so students can apply from the placements page.",
-              href: "/admin",
-              cta: "Review",
-              status: !hasCompanies ? "todo" : hasActive ? "done" : "current",
-            },
-            {
-              key: "applications",
-              title: "Review applications",
-              description: "Open student submissions, download documents, and update statuses.",
-              href: "/admin/applications",
-              cta: "Open inbox",
-              status: hasActive ? "current" : "todo",
-            },
-          ]
-          return <NextStepsJourney eyebrow="Admin journey" title="Keep the pipeline moving" steps={steps} />
-        })()}
-
+        {/* 3. Directory */}
+        <section>
+          <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
+              <h2 className="font-display text-2xl md:text-3xl text-ink">All companies</h2>
+            </div>
+            <div className="text-sm text-muted-foreground">Showing {filtered.length} of {companies.length}</div>
+          </div>
 
         <Card className="mb-6">
           <CardContent className="pt-6 flex flex-col md:flex-row gap-3">
@@ -342,7 +369,6 @@ export default function Admin() {
           </CardContent>
         </Card>
 
-        <div className="text-sm text-muted-foreground mb-3">Showing {filtered.length} of {companies.length}</div>
 
         <div className="border border-border rounded-xl overflow-hidden bg-card">
           <div className="overflow-x-auto">
@@ -392,6 +418,8 @@ export default function Admin() {
             </table>
           </div>
         </div>
+        </section>
+
       </main>
       <Footer />
 
@@ -506,6 +534,20 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
     </Card>
   )
 }
+
+function BigStat({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: number; accent?: boolean }) {
+  return (
+    <Card className={accent ? "bg-ink text-primary-foreground border-ink" : "border-ink/20"}>
+      <CardContent className="p-6">
+        <div className={`text-[10px] uppercase tracking-[0.25em] mb-3 flex items-center gap-1.5 ${accent ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+          {icon} {label}
+        </div>
+        <div className={`text-5xl md:text-6xl font-display leading-none ${accent ? "" : "text-ink"}`}>{value}</div>
+      </CardContent>
+    </Card>
+  )
+}
+
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><Label className="mb-1.5 block text-sm">{label}</Label>{children}</div>
