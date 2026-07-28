@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText } from "lucide-react"
 import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
+import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Company = {
   id: string
