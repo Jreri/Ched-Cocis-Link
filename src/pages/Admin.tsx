@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText } from "lucide-react"
 import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
+import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Company = {
   id: string
@@ -284,6 +285,39 @@ export default function Admin() {
           <StatCard icon={<MapPin className="w-4 h-4" />} label="States covered" value={stats.states} />
           <StatCard icon={<Layers className="w-4 h-4" />} label="Departments" value={departments.length} />
         </div>
+
+        {(() => {
+          const hasCompanies = companies.length > 0
+          const hasActive = stats.active > 0
+          const steps: JourneyStep[] = [
+            {
+              key: "companies",
+              title: "Manage companies",
+              description: "Add, edit, and activate placement partners. Configure slots and requirements.",
+              href: "/admin",
+              cta: "Manage",
+              status: hasCompanies ? "done" : "current",
+            },
+            {
+              key: "activate",
+              title: "Enable applications",
+              description: "Mark companies as active so students can apply from the placements page.",
+              href: "/admin",
+              cta: "Review",
+              status: !hasCompanies ? "todo" : hasActive ? "done" : "current",
+            },
+            {
+              key: "applications",
+              title: "Review applications",
+              description: "Open student submissions, download documents, and update statuses.",
+              href: "/admin/applications",
+              cta: "Open inbox",
+              status: hasActive ? "current" : "todo",
+            },
+          ]
+          return <NextStepsJourney eyebrow="Admin journey" title="Keep the pipeline moving" steps={steps} />
+        })()}
+
 
         <Card className="mb-6">
           <CardContent className="pt-6 flex flex-col md:flex-row gap-3">

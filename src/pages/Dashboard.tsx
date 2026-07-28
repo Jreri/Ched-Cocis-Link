@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Profile = {
   full_name: string | null
@@ -123,6 +124,57 @@ const Dashboard = () => {
             <Button variant="ghost" size="sm" onClick={signOut}>Sign out</Button>
           </div>
         </div>
+
+        {/* Guided journey */}
+        {(() => {
+          const profileComplete = !!(profile?.full_name && profile?.department_id && profile?.institution)
+          const hasUnlocked = unlocked.length > 0
+          const hasApplied = applications.length > 0
+          const steps: JourneyStep[] = [
+            {
+              key: "profile",
+              title: "Complete your profile",
+              description: "Add your name, department and institution so applications auto-fill.",
+              href: "/profile",
+              cta: "Edit profile",
+              status: profileComplete ? "done" : "current",
+            },
+            {
+              key: "find",
+              title: "Find a placement",
+              description: "Browse companies matched to your department across Nigerian cities.",
+              href: "/placements",
+              cta: "Browse placements",
+              status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
+            },
+            {
+              key: "unlock",
+              title: "Unlock a city",
+              description: "Pay ₦3,000 once to reveal every company in that city.",
+              href: "/placements",
+              cta: "Unlock city",
+              status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
+            },
+            {
+              key: "apply",
+              title: "Apply for internship",
+              description: "Submit your one-tap application — we email the company for you.",
+              href: "/placements",
+              cta: "Start applying",
+              status: !hasUnlocked ? "todo" : hasApplied ? "done" : "current",
+            },
+            {
+              key: "track",
+              title: "Track your status",
+              description: "Watch pending, accepted or rejected responses from companies.",
+              href: "/dashboard",
+              cta: "View applications",
+              status: hasApplied ? "current" : "todo",
+            },
+          ]
+          return <NextStepsJourney steps={steps} />
+        })()}
+
 
         {/* Snapshot cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
