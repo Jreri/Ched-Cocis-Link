@@ -418,6 +418,8 @@ export default function Admin() {
             </table>
           </div>
         </div>
+        </section>
+
       </main>
       <Footer />
 
