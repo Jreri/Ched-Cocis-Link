@@ -1,69 +1,33 @@
+# Updates Batch
 
-## ChedLink cleanup + completion plan
+## 1. Authentication accounts
+- Provision the two accounts via a migration using `auth.admin` is not possible from SQL; instead, use a one-off approach: create them by inserting into `auth.users` is disallowed. Correct approach: use `supabase.auth.admin.createUser` in an edge function OR ask the user to sign up once. Simplest: create a small admin-only bootstrap edge function `seed-accounts` invoked once via curl, that creates both users with service role and assigns admin role for ikoroeric2@gmail.com. Confirm emails automatically.
+- Also delete/disable pre-existing users? "Remove all existing login credentials" — we will delete all existing auth users and their profile/role rows via a migration/SQL cleanup script.
 
-Five clusters, done in this order so each phase leaves the app in a working state.
+## 2. Sidebar full-height fix
+- Ensure the mobile sheet / sidebar overlay uses `position: fixed; inset: 0; height: 100dvh` and locks body scroll. Audit `Header.tsx` mobile menu and any Sheet usage.
 
-### 1. Rebrand & visual bug cleanup
+## 3. Dashboard
+- Remove `<NextStepsJourney />` usage from `Dashboard.tsx`.
+- Unlocked City cards link to `/placements?state=X&city=Y` and Placements page auto-selects from URL params and scrolls to the companies list.
 
-- `src/pages/Dashboard.tsx`: title → "Dashboard — ChedLink"; drop the 👋 to match editorial tone.
-- `src/pages/Auth.tsx`: title → "Sign in — ChedLink"; heading + copy → ChedLink / CCL wording.
-- `src/pages/Placements.tsx`: replace `font-serif` classes with `font-display` used across the rebrand.
-- `src/components/Header.tsx`: when the signed-in user has the `admin` role (checked via `has_role` RPC), show a subtle `Admin` link in the desktop nav + drawer. Also register a global `Ctrl+Shift+A` shortcut that navigates to `/admin` (works for anyone; the page itself is already role-gated).
+## 4. Application form
+- In `Apply.tsx`, replace free-text `internship_duration` input with a dropdown (2–6 months + Custom) and add an `internship_type` dropdown (SIWES / NYSC / Other).
+- Also update `Profile.tsx` similarly for consistency.
+- Add `internship_type` column to `profiles` and store in application snapshot.
 
-### 2. Register — department dropdown fix
+## 5. Placement flow after payment
+- After Paystack verify success in `Placements.tsx`, auto-select the paid location, refetch unlocked companies, and smooth-scroll to the companies section with a highlight.
 
-Current bug: on `/register`, the department Select is populated by a `.then` on a Supabase promise that Supabase JS actually returns as a thenable but not a real Promise — combined with Radix Select mounting inside a portal, users have reported the list looks empty or the selected value doesn't stick.
+## 6. Mobile responsiveness pass
+- Audit `Header`, `Hero`, `Dashboard`, `Placements`, `Admin`, `Apply`, `Profile` for overflow, duplicated sections, spacing. Fix container padding, grid breakpoints, and any `min-w` issues.
 
-Fix in `src/pages/Auth.tsx`:
-- Rewrite the fetch as `useEffect(() => { (async () => { const { data } = await supabase.from("departments")…; setDepartments(data ?? []) })() }, [])`.
-- Add a loading state so the trigger shows "Loading departments…" until the list arrives, and a fallback message if the list is empty (with a link to Contact).
-- Ensure `SelectContent` has `className="z-[70] bg-popover"` so it renders above the auth card on mobile.
-- Confirm the selected `departmentId` survives tab switch between Sign in / Create account.
+## 7. Admin CSV bulk upload
+- In `Admin.tsx` add a "Bulk upload CSV" button opening a file picker.
+- Parse CSV client-side (papaparse). Columns: `name,address,state,city,hr_email,requirements,internship_position,instructions,departments` (departments as comma-separated names).
+- For each row: insert into `companies` with `internship_email = hr_email`; look up department IDs by name and insert `company_departments` rows.
+- Existing `submit-application` already sends to `company.internship_email`, so HR routing works automatically.
 
-### 3. Applications on Dashboard + Admin
-
-**Dashboard** (`src/pages/Dashboard.tsx`)
-- Add a "Your applications" section below unlocked locations.
-- Query: `applications` joined to `companies` for name/city/state; ordered by `created_at desc`, limited to 10.
-- Show company, position (from snapshot), sent-to email, status badge, submitted date.
-
-**Admin** (new route + page)
-- Add `/admin/applications` route in `src/App.tsx`.
-- New file `src/pages/AdminApplications.tsx` with the same admin gate as `Admin.tsx`.
-- Table: applicant name/email, company, state/city, status, submitted date, expandable row with the snapshot info + document links (generated via signed URLs from an existing or new edge function).
-- Status dropdown to update `applications.status` between `sent`, `reviewed`, `accepted`, `rejected`.
-- Add a link to `/admin/applications` from the main `/admin` header.
-
-Schema/DB:
-- Add `UPDATE` policy on `applications` for admins only.
-- Add a small edge function `application-docs` that admins call with an application id and it returns signed URLs for that application's documents (7-day). Avoids exposing storage paths directly.
-
-### 4. Email deliverability
-
-`submit-application` currently uses `from: "ChedLink <onboarding@resend.dev>"`, which only delivers to the Resend account owner. Two paths:
-
-- **Recommended**: switch to Lovable Emails. Run `email_domain--check_email_domain_status`, then if no domain is set up, present the email setup dialog. Rewrite `submit-application` to call `send-transactional-email` with a new `intern-application` React Email template that renders the same content (applicant info table + signed doc links). Registered subject "Ched-COCIS Link: Intern Application".
-- **Alternative** (only if the user prefers Resend): request they add a verified domain in Resend, then swap the `from` to `applications@<their-domain>`.
-
-Will do Lovable Emails by default; user can override in-thread.
-
-### 5. Admin completeness
-
-- **Departments CRUD** — new tab/section in `/admin`: list existing departments, add, rename, toggle `is_active`. All admin-only via existing `has_role` policies.
-- **Slots** — expose `companies.slots` in the Admin dialog (`Field label="Slots"`, numeric).
-- **Logo upload** — replace the freeform `logo_url` with a file input that uploads to a new public `company-logos` bucket via `storage_create_bucket`, stores the resulting public URL.
-- **Password reset** — add `Forgot password?` link on Auth page → new `/forgot-password` page (`resetPasswordForEmail` with `redirectTo: /reset-password`) + `/reset-password` page that calls `updateUser({ password })`.
-- **Delete document** in `Profile.tsx` — trash icon next to each uploaded doc; removes from storage and from `profiles.documents`.
-
-### Technical notes
-
-- All new SQL goes through the migration tool; grants + RLS included per house rules.
-- No changes to `src/integrations/supabase/client.ts` or `types.ts`.
-- Ship in the order above; after each cluster the app remains fully functional.
-- Not touching design tokens or the Midnight Indigo palette.
-
-### Not in scope (call out for later)
-
-- Admin "resend application" button.
-- Duplicate-submission prevention (would need a unique index on `(user_id, company_id)` — needs a product call because users may legitimately reapply).
-- Breadcrumbs and skeleton loaders — polish pass after the above lands.
+## Out of scope / notes
+- No changes to Paystack pricing or admin RLS.
+- Existing `applications`, `placement_access` rows will be orphaned when we wipe users — we'll cascade-delete them in the cleanup migration.
