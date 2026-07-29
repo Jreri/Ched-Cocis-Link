@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -38,6 +38,7 @@ const Placements = () => {
   const [viewingCity, setViewingCity] = useState<{ state: string; city: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [verifying, setVerifying] = useState(false);
+  const companiesRef = useRef<HTMLDivElement | null>(null);
 
   const key = (s: string, c: string) => `${s}|${c}`;
 
