@@ -258,6 +258,7 @@ export type Database = {
           id: string
           institution: string | null
           internship_duration: string | null
+          internship_type: string | null
           level: string | null
           matric_number: string | null
           phone: string | null
@@ -276,6 +277,7 @@ export type Database = {
           id: string
           institution?: string | null
           internship_duration?: string | null
+          internship_type?: string | null
           level?: string | null
           matric_number?: string | null
           phone?: string | null
@@ -294,6 +296,7 @@ export type Database = {
           id?: string
           institution?: string | null
           internship_duration?: string | null
+          internship_type?: string | null
           level?: string | null
           matric_number?: string | null
           phone?: string | null

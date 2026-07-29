@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -38,6 +38,7 @@ const Placements = () => {
   const [viewingCity, setViewingCity] = useState<{ state: string; city: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [verifying, setVerifying] = useState(false);
+  const companiesRef = useRef<HTMLDivElement | null>(null);
 
   const key = (s: string, c: string) => `${s}|${c}`;
 
@@ -86,10 +87,8 @@ const Placements = () => {
         if (data?.success) {
           toast.success(`Payment confirmed — ${data.city}, ${data.state} unlocked!`);
           await loadUnlocked();
-          if (data.state) {
-            setSelectedState(data.state);
-            const { data: cityRows } = await supabase.rpc("get_available_cities", { _state: data.state });
-            setCities((cityRows as CityRow[]) || []);
+          if (data.state && data.city) {
+            await openStateAndView(data.state, data.city);
           }
         } else {
           toast.error("Payment was not completed");
@@ -115,6 +114,41 @@ const Placements = () => {
     setCities((data as CityRow[]) || []);
   };
 
+  const viewCompanies = async (state: string, city: string) => {
+    setViewingCity({ state, city });
+    setCompanies([]);
+    const { data, error } = await supabase.rpc("get_unlocked_companies", {
+      _state: state,
+      _city: city,
+    });
+    if (error) toast.error(error.message);
+    setCompanies((data as Company[]) || []);
+    // scroll to companies section after paint
+    setTimeout(() => {
+      companiesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  };
+
+  const openStateAndView = async (state: string, city: string) => {
+    setSelectedState(state);
+    const { data } = await supabase.rpc("get_available_cities", { _state: state });
+    setCities((data as CityRow[]) || []);
+    await viewCompanies(state, city);
+  };
+
+  // Deep-link support: ?state=X&city=Y
+  useEffect(() => {
+    if (!authed) return;
+    const qState = searchParams.get("state");
+    const qCity = searchParams.get("city");
+    if (qState && qCity && (!viewingCity || viewingCity.city !== qCity || viewingCity.state !== qState)) {
+      openStateAndView(qState, qCity);
+    } else if (qState && !qCity && selectedState !== qState) {
+      openState(qState);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, searchParams]);
+
   const pay = async (state: string, city: string) => {
     setPayingKey(key(state, city));
     try {
@@ -126,6 +160,7 @@ const Placements = () => {
       if (data?.already_paid) {
         toast.info("You already have access to this location");
         await loadUnlocked();
+        await openStateAndView(state, city);
       } else if (data?.authorization_url) {
         window.location.href = data.authorization_url;
       } else {
@@ -136,17 +171,6 @@ const Placements = () => {
     } finally {
       setPayingKey(null);
     }
-  };
-
-  const viewCompanies = async (state: string, city: string) => {
-    setViewingCity({ state, city });
-    setCompanies([]);
-    const { data, error } = await supabase.rpc("get_unlocked_companies", {
-      _state: state,
-      _city: city,
-    });
-    if (error) toast.error(error.message);
-    setCompanies((data as Company[]) || []);
   };
 
   if (loading) {
@@ -339,7 +363,7 @@ const Placements = () => {
             )}
 
             {viewingCity && (
-              <Card>
+              <Card ref={companiesRef} className="ring-2 ring-primary/30 scroll-mt-28">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Building className="h-5 w-5" />

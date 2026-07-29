@@ -8,10 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Upload, CheckCircle2, ArrowLeft, Mail, MapPin, Building2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { mergeRequirements, CANONICAL_FIELDS } from "@/lib/applicationFields"
+
+const DURATION_PRESETS = ["2 Months", "3 Months", "4 Months", "5 Months", "6 Months"]
+const TYPE_PRESETS = ["SIWES", "NYSC", "Placement", "Other"]
 
 const Apply = () => {
   const { companyId } = useParams<{ companyId: string }>()
@@ -200,19 +204,49 @@ const Apply = () => {
         <Card className="mb-6">
           <CardHeader><CardTitle className="text-lg">Your information</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            {fields.filter(f => f.kind !== "document").map(f => (
-              <div key={f.key} className="space-y-1.5">
-                <Label>
-                  {f.label} {f.requirement === "required" && <span className="text-destructive">*</span>}
-                  {f.requirement === "optional" && <span className="text-muted-foreground text-xs ml-1">(optional)</span>}
-                </Label>
-                {f.input === "textarea" ? (
-                  <Textarea rows={2} value={info[f.key] || ""} onChange={e => setInfo(s => ({ ...s, [f.key]: e.target.value }))} />
-                ) : (
-                  <Input type={f.input || "text"} value={info[f.key] || ""} onChange={e => setInfo(s => ({ ...s, [f.key]: e.target.value }))} />
-                )}
-              </div>
-            ))}
+            {fields.filter(f => f.kind !== "document").map(f => {
+              const val = info[f.key] || ""
+              const setVal = (v: string) => setInfo(s => ({ ...s, [f.key]: v }))
+              const isDuration = f.key === "internship_duration"
+              const isType = f.key === "internship_type"
+              const durationIsCustom = isDuration && val !== "" && !DURATION_PRESETS.includes(val)
+              return (
+                <div key={f.key} className="space-y-1.5">
+                  <Label>
+                    {f.label} {f.requirement === "required" && <span className="text-destructive">*</span>}
+                    {f.requirement === "optional" && <span className="text-muted-foreground text-xs ml-1">(optional)</span>}
+                  </Label>
+                  {isType ? (
+                    <Select value={TYPE_PRESETS.includes(val) ? val : ""} onValueChange={setVal}>
+                      <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectContent className="z-[70] bg-popover">
+                        {TYPE_PRESETS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : isDuration ? (
+                    <div className="space-y-2">
+                      <Select
+                        value={durationIsCustom ? "__custom__" : (val || "")}
+                        onValueChange={(v) => setVal(v === "__custom__" ? " " : v)}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
+                        <SelectContent className="z-[70] bg-popover">
+                          {DURATION_PRESETS.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          <SelectItem value="__custom__">Custom…</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {durationIsCustom && (
+                        <Input placeholder="e.g. 8 weeks" value={val.trim()} onChange={e => setVal(e.target.value)} />
+                      )}
+                    </div>
+                  ) : f.input === "textarea" ? (
+                    <Textarea rows={2} value={val} onChange={e => setVal(e.target.value)} />
+                  ) : (
+                    <Input type={f.input || "text"} value={val} onChange={e => setVal(e.target.value)} />
+                  )}
+                </div>
+              )
+            })}
             {fields.filter(f => f.kind !== "document").length === 0 && (
               <p className="text-sm text-muted-foreground">No information fields required.</p>
             )}

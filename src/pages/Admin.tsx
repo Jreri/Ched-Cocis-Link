@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText } from "lucide-react"
+import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText, Upload } from "lucide-react"
+import Papa from "papaparse"
 import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
 import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
@@ -72,6 +73,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [bulkImporting, setBulkImporting] = useState(false)
 
   const loadAll = async () => {
     const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
@@ -251,6 +253,67 @@ export default function Admin() {
     setForm(f => ({ ...f, department_ids: f.department_ids.includes(id) ? f.department_ids.filter(x => x !== id) : [...f.department_ids, id] }))
   }
 
+  const handleBulkCsv = async (file: File) => {
+    setBulkImporting(true)
+    try {
+      const text = await file.text()
+      const parsed = Papa.parse<Record<string, string>>(text, { header: true, skipEmptyLines: true, transformHeader: h => h.trim().toLowerCase() })
+      if (parsed.errors.length) {
+        toast({ title: "CSV parse warning", description: parsed.errors[0].message })
+      }
+      const rows = parsed.data.filter(r => r.name || r["company name"])
+      if (!rows.length) { toast({ title: "Empty CSV", description: "No rows found." }); return }
+
+      const deptByName = new Map(departments.map(d => [d.name.toLowerCase(), d.id]))
+      const deptBySlug = new Map(departments.map(d => [d.slug.toLowerCase(), d.id]))
+
+      let ok = 0, failed = 0
+      for (const r of rows) {
+        const name = (r.name || r["company name"] || "").trim()
+        if (!name) { failed++; continue }
+        const state = (r.state || "").trim() || "Lagos State"
+        const payload = {
+          name,
+          address: (r.address || r["company address"] || "").trim() || "—",
+          state,
+          city: (r.city || "").trim() || null,
+          lga: (r.lga || "").trim() || null,
+          business_district: (r["business district"] || r.business_district || "").trim() || null,
+          description: (r.description || "").trim() || null,
+          contact_email: (r["contact email"] || r.contact_email || "").trim() || null,
+          contact_phone: (r["contact phone"] || r.contact_phone || r.phone || "").trim() || null,
+          internship_email: (r["hr email"] || r.hr_email || r["hr_email"] || r["internship email"] || r.internship_email || "").trim() || null,
+          internship_position: (r.position || r["internship position"] || r.internship_position || "").trim() || null,
+          instructions: (r.requirements || r["internship requirements"] || r.instructions || "").trim() || null,
+          applications_enabled: true,
+          is_active: true,
+        }
+        const { data: ins, error } = await supabase.from("companies").insert(payload).select("id").single()
+        if (error || !ins) { failed++; continue }
+        const deptField = (r.departments || r.department || "").trim()
+        let deptIds: string[] = []
+        if (deptField) {
+          deptIds = deptField.split(/[,;|]/).map(s => s.trim().toLowerCase()).filter(Boolean)
+            .map(k => deptByName.get(k) || deptBySlug.get(k)).filter(Boolean) as string[]
+        }
+        if (!deptIds.length) {
+          // default to Computer Science / Cyber Security so admin sees them
+          deptIds = departments.filter(d => ["computer-science","cyber-security","software-engineering","information-technology"].includes(d.slug)).map(d => d.id)
+        }
+        if (deptIds.length) {
+          await supabase.from("company_departments").insert(deptIds.map(did => ({ company_id: ins.id, department_id: did })))
+        }
+        ok++
+      }
+      toast({ title: "Bulk import complete", description: `${ok} added, ${failed} skipped.` })
+      await loadAll()
+    } catch (e: any) {
+      toast({ title: "Import failed", description: e.message ?? String(e) })
+    } finally {
+      setBulkImporting(false)
+    }
+  }
+
   if (loading || !authorized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -273,10 +336,24 @@ export default function Admin() {
                 Manage the placement directory. Changes appear instantly for students.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button asChild variant="outline" className="rounded-full gap-2">
                 <Link to="/admin/applications"><FileText className="w-4 h-4" /> Applications</Link>
               </Button>
+              <label>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleBulkCsv(f); e.target.value = "" }}
+                />
+                <Button asChild variant="outline" className="rounded-full gap-2" disabled={bulkImporting}>
+                  <span className="cursor-pointer inline-flex items-center">
+                    {bulkImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    Bulk CSV
+                  </span>
+                </Button>
+              </label>
               <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
                 <Plus className="w-4 h-4" /> Add company
               </Button>

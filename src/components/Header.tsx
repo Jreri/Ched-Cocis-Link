@@ -129,12 +129,16 @@ const Header = () => {
       {open && (
         <>
           <div
-            className="lg:hidden fixed inset-0 top-0 bg-ink/60 backdrop-blur-sm z-40 animate-fade-in"
+            className="lg:hidden fixed inset-0 bg-ink/60 backdrop-blur-sm z-40 animate-fade-in"
+            style={{ height: "100dvh" }}
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="lg:hidden fixed top-0 right-0 h-full w-[86%] max-w-sm bg-background shadow-2xl z-50 flex flex-col border-l border-border animate-fade-in">
-            <div className="h-20 flex items-center px-6 border-b border-border">
+          <aside
+            className="lg:hidden fixed top-0 right-0 w-[86%] max-w-sm bg-background shadow-2xl z-50 flex flex-col border-l border-border animate-fade-in"
+            style={{ height: "100dvh" }}
+          >
+            <div className="h-20 flex items-center px-6 border-b border-border shrink-0">
               <span className="font-display text-lg text-ink">ChedLink</span>
               <span className="ml-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">CCL</span>
             </div>
@@ -160,7 +164,7 @@ const Header = () => {
                 )}
               </div>
             </nav>
-            <div className="p-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground border-t border-border">
+            <div className="p-4 text-[10px] uppercase tracking-[0.2em] text-muted-foreground border-t border-border shrink-0">
               Ched Dev × COCIS
             </div>
           </aside>

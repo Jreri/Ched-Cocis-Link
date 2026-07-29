@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
+
 
 type Profile = {
   full_name: string | null
@@ -97,52 +97,6 @@ const Dashboard = () => {
     )
   }
 
-  const profileComplete = !!(profile?.full_name && profile?.department_id && profile?.institution)
-  const hasUnlocked = unlocked.length > 0
-  const hasApplied = applications.length > 0
-  const steps: JourneyStep[] = [
-    {
-      key: "profile",
-      title: "Complete your profile",
-      description: "Add your name, department and institution so applications auto-fill.",
-      href: "/profile",
-      cta: "Edit profile",
-      status: profileComplete ? "done" : "current",
-    },
-    {
-      key: "find",
-      title: "Find a placement",
-      description: "Browse companies matched to your department across Nigerian cities.",
-      href: "/placements",
-      cta: "Browse placements",
-      status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
-    },
-    {
-      key: "unlock",
-      title: "Unlock a city",
-      description: "Pay ₦3,000 once to reveal every company in that city.",
-      href: "/placements",
-      cta: "Unlock city",
-      status: !profileComplete ? "todo" : hasUnlocked ? "done" : "current",
-    },
-    {
-      key: "apply",
-      title: "Apply for internship",
-      description: "Submit your one-tap application — we email the company for you.",
-      href: "/placements",
-      cta: "Start applying",
-      status: !hasUnlocked ? "todo" : hasApplied ? "done" : "current",
-    },
-    {
-      key: "track",
-      title: "Track your status",
-      description: "Watch pending, accepted or rejected responses from companies.",
-      href: "/dashboard",
-      cta: "View applications",
-      status: hasApplied ? "current" : "todo",
-    },
-  ]
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
@@ -159,7 +113,7 @@ const Dashboard = () => {
                 Your placement activity at a glance.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button asChild size="sm" className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">
                 <Link to="/placements">Find placements <ArrowRight className="w-4 h-4 ml-1" /></Link>
               </Button>
@@ -172,12 +126,7 @@ const Dashboard = () => {
           <div className="h-px bg-ink/10 mt-10" />
         </header>
 
-        {/* 1. Next action — most prominent */}
-        <section className="mb-16">
-          <NextStepsJourney steps={steps} />
-        </section>
-
-        {/* 2. Key stats — editorial numbers */}
+        {/* Key stats — editorial numbers */}
         <section className="mb-16">
           <div className="flex items-baseline justify-between mb-6">
             <div>
@@ -279,7 +228,7 @@ const Dashboard = () => {
                     {unlocked.map((u) => (
                       <Link
                         key={`${u.state}|${u.city}`}
-                        to="/placements"
+                        to={`/placements?state=${encodeURIComponent(u.state)}&city=${encodeURIComponent(u.city)}`}
                         className="group p-4 border rounded-lg flex items-center justify-between hover:border-ink hover:bg-muted/50 transition-colors"
                       >
                         <div className="min-w-0">

@@ -29,6 +29,7 @@ export const CANONICAL_FIELDS: CanonicalField[] = [
   { key: "level", label: "Level", kind: "info", default: "required", input: "text", profileKey: "level" },
   { key: "matric_number", label: "Matriculation Number", kind: "info", default: "required", input: "text", profileKey: "matric_number" },
   // Internship
+  { key: "internship_type", label: "Internship Type", kind: "info", default: "required", input: "text", profileKey: "internship_type" },
   { key: "internship_duration", label: "Expected Internship Duration", kind: "info", default: "required", input: "text", profileKey: "internship_duration" },
   { key: "preferred_start_date", label: "Preferred Start Date", kind: "info", default: "required", input: "date", profileKey: "preferred_start_date" },
   { key: "expected_end_date", label: "Expected End Date", kind: "info", default: "required", input: "date", profileKey: "expected_end_date" },
