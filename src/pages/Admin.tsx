@@ -336,10 +336,24 @@ export default function Admin() {
                 Manage the placement directory. Changes appear instantly for students.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button asChild variant="outline" className="rounded-full gap-2">
                 <Link to="/admin/applications"><FileText className="w-4 h-4" /> Applications</Link>
               </Button>
+              <label>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleBulkCsv(f); e.target.value = "" }}
+                />
+                <Button asChild variant="outline" className="rounded-full gap-2" disabled={bulkImporting}>
+                  <span className="cursor-pointer inline-flex items-center">
+                    {bulkImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    Bulk CSV
+                  </span>
+                </Button>
+              </label>
               <Button onClick={openCreate} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90 gap-2">
                 <Plus className="w-4 h-4" /> Add company
               </Button>
