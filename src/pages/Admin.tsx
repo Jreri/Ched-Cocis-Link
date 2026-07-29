@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
-import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText } from "lucide-react"
+import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText, Upload } from "lucide-react"
+import Papa from "papaparse"
 import { CANONICAL_FIELDS, type FieldReq } from "@/lib/applicationFields"
 import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
@@ -72,6 +73,7 @@ export default function Admin() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
+  const [bulkImporting, setBulkImporting] = useState(false)
 
   const loadAll = async () => {
     const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
