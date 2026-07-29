@@ -228,7 +228,7 @@ const Dashboard = () => {
                     {unlocked.map((u) => (
                       <Link
                         key={`${u.state}|${u.city}`}
-                        to="/placements"
+                        to={`/placements?state=${encodeURIComponent(u.state)}&city=${encodeURIComponent(u.city)}`}
                         className="group p-4 border rounded-lg flex items-center justify-between hover:border-ink hover:bg-muted/50 transition-colors"
                       >
                         <div className="min-w-0">
