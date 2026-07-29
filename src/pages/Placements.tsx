@@ -363,7 +363,7 @@ const Placements = () => {
             )}
 
             {viewingCity && (
-              <Card>
+              <Card ref={companiesRef} className="ring-2 ring-primary/30 scroll-mt-28">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Building className="h-5 w-5" />
