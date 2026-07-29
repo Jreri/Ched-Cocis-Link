@@ -8,10 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Upload, CheckCircle2, ArrowLeft, Mail, MapPin, Building2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { mergeRequirements, CANONICAL_FIELDS } from "@/lib/applicationFields"
+
+const DURATION_PRESETS = ["2 Months", "3 Months", "4 Months", "5 Months", "6 Months"]
+const TYPE_PRESETS = ["SIWES", "NYSC", "Placement", "Other"]
 
 const Apply = () => {
   const { companyId } = useParams<{ companyId: string }>()
