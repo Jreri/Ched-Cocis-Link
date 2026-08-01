@@ -43,6 +43,37 @@ export const CANONICAL_FIELDS: CanonicalField[] = [
   { key: "doc_cv", label: "Curriculum Vitae (CV, include date of birth)", kind: "document", default: "required" },
 ]
 
+export const DOCUMENT_FIELDS = CANONICAL_FIELDS.filter(f => f.kind === "document")
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+
+/**
+ * Resolve a free-text requirements string (from CSV) into canonical document field keys.
+ * Accepts field keys ("doc_cv"), labels ("Curriculum Vitae"), or common aliases ("CV", "passport").
+ */
+export function resolveDocumentKeys(input: string): { keys: string[]; unmatched: string[] } {
+  const aliases: Record<string, string> = {
+    cv: "doc_cv",
+    resume: "doc_cv",
+    curriculum vitae_placeholder: "doc_cv",
+  }
+  const tokens = input.split(/[,;|\n]/).map(t => t.trim()).filter(Boolean)
+  const keys: string[] = []
+  const unmatched: string[] = []
+  tokens.forEach(t => {
+    const n = norm(t)
+    const byKey = DOCUMENT_FIELDS.find(f => norm(f.key) === n || f.key.toLowerCase() === t.toLowerCase())
+    const byLabel = DOCUMENT_FIELDS.find(f => norm(f.label) === n)
+    const byPartial = DOCUMENT_FIELDS.find(f => norm(f.label).includes(n) || n.includes(norm(f.key).replace(/^doc /, "")))
+    const alias = aliases[n]
+    const match = byKey || byLabel || byPartial || (alias ? DOCUMENT_FIELDS.find(f => f.key === alias) : undefined)
+    if (match) { if (!keys.includes(match.key)) keys.push(match.key) }
+    else unmatched.push(t)
+  })
+  return { keys, unmatched }
+}
+
+
 export type CompanyRequirementRow = {
   field_key: string
   kind: FieldKind
