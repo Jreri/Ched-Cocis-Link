@@ -177,7 +177,15 @@ export default function Admin() {
       toast({ title: "Missing fields", description: "Name, address and state are required." })
       return
     }
+    const dupe = companies.find(
+      c => c.name.trim().toLowerCase() === form.name.trim().toLowerCase() && c.id !== form.id
+    )
+    if (dupe) {
+      toast({ title: "Duplicate company", description: `"${dupe.name}" already exists in the directory.` })
+      return
+    }
     setSaving(true)
+
     try {
       const payload = {
         name: form.name.trim(),
