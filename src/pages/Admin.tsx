@@ -242,7 +242,14 @@ export default function Admin() {
       setDialogOpen(false)
       await loadAll()
     } catch (e: any) {
-      toast({ title: "Save failed", description: e.message ?? String(e) })
+      const msg = String(e?.message ?? e)
+      toast({
+        title: msg.includes("companies_unique_name_idx") || e?.code === "23505" ? "Duplicate company" : "Save failed",
+        description: msg.includes("companies_unique_name_idx") || e?.code === "23505"
+          ? "A company with this name already exists."
+          : msg,
+      })
+
     } finally {
       setSaving(false)
     }
