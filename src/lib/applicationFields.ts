@@ -77,8 +77,9 @@ export function resolveDocumentKeys(input: string): { keys: string[]; unmatched:
     const byKey = DOCUMENT_FIELDS.find(f => norm(f.key) === n || f.key.toLowerCase() === t.toLowerCase())
     const byLabel = DOCUMENT_FIELDS.find(f => norm(f.label) === n)
     const byPartial = DOCUMENT_FIELDS.find(f => norm(f.label).includes(n) || n.includes(norm(f.key).replace(/^doc /, "")))
-    const alias = aliases[n]
-    const match = byKey || byLabel || byPartial || (alias ? DOCUMENT_FIELDS.find(f => f.key === alias) : undefined)
+    const alias = aliases[n] ? DOCUMENT_FIELDS.find(f => f.key === aliases[n]) : undefined
+    const match = byKey || byLabel || alias || byPartial
+
     if (match) { if (!keys.includes(match.key)) keys.push(match.key) }
     else unmatched.push(t)
   })
