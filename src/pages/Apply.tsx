@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, CheckCircle2, ArrowLeft, Mail, MapPin, Building2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import { mergeRequirements, CANONICAL_FIELDS } from "@/lib/applicationFields"
+import { mergeRequirements, CANONICAL_FIELDS, type CompanyRequirementRow } from "@/lib/applicationFields"
+import CompanyRequirements from "@/components/CompanyRequirements"
+
 
 const DURATION_PRESETS = ["2 Months", "3 Months", "4 Months", "5 Months", "6 Months"]
 const TYPE_PRESETS = ["SIWES", "NYSC", "Placement", "Other"]
@@ -25,7 +27,9 @@ const Apply = () => {
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
   const [company, setCompany] = useState<any>(null)
   const [fields, setFields] = useState<ReturnType<typeof mergeRequirements>>([])
+  const [rawRequirements, setRawRequirements] = useState<CompanyRequirementRow[]>([])
   const [profile, setProfile] = useState<any>(null)
+
   const [uid, setUid] = useState<string>("")
   const [info, setInfo] = useState<Record<string, string>>({})
   const [docs, setDocs] = useState<Record<string, string>>({}) // fieldKey -> storage path
