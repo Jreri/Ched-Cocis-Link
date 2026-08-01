@@ -653,7 +653,61 @@ export default function Admin() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!importSummary} onOpenChange={(o) => !o && setImportSummary(null)}>
+        <DialogContent className="max-w-lg max-h-[85dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Import summary</DialogTitle>
+          </DialogHeader>
+          {importSummary && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 rounded-lg border">
+                  <div className="text-2xl font-display">{importSummary.imported.length}</div>
+                  <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Imported</div>
+                </div>
+                <div className="p-3 rounded-lg border">
+                  <div className="text-2xl font-display">{importSummary.skippedDuplicates.length}</div>
+                  <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Duplicates</div>
+                </div>
+                <div className="p-3 rounded-lg border">
+                  <div className="text-2xl font-display">{importSummary.failedRows.length}</div>
+                  <div className="text-[11px] text-muted-foreground uppercase tracking-wide">Failed</div>
+                </div>
+              </div>
+              {importSummary.skippedDuplicates.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Skipped (already exist)</div>
+                  <ul className="list-disc pl-5 text-muted-foreground space-y-0.5">
+                    {importSummary.skippedDuplicates.map((n, i) => <li key={i}>{n}</li>)}
+                  </ul>
+                </div>
+              )}
+              {importSummary.failedRows.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Failed rows</div>
+                  <ul className="list-disc pl-5 text-muted-foreground space-y-0.5">
+                    {importSummary.failedRows.map((n, i) => <li key={i}>{n}</li>)}
+                  </ul>
+                </div>
+              )}
+              {importSummary.unmatchedReqs.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Unrecognised requirements</div>
+                  <p className="text-muted-foreground">
+                    Saved as instructions text: {importSummary.unmatchedReqs.join(", ")}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setImportSummary(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   )
 }
 
