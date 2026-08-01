@@ -59,8 +59,10 @@ const Apply = () => {
       }
       const co = (coData as any[])[0]
       setCompany(co)
+      setRawRequirements(((reqData as any[]) || []) as CompanyRequirementRow[])
       const merged = mergeRequirements((reqData as any[]) || [])
       setFields(merged)
+
 
       const p = prof as any
       setProfile(p)
