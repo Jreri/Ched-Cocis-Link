@@ -340,6 +340,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      browse_companies: {
+        Args: never
+        Returns: {
+          applications_enabled: boolean
+          business_district: string
+          city: string
+          description: string
+          id: string
+          internship_position: string
+          is_unlocked: boolean
+          name: string
+          state: string
+        }[]
+      }
       get_available_cities: {
         Args: { _state: string }
         Returns: {

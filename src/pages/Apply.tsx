@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, CheckCircle2, ArrowLeft, Mail, MapPin, Building2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
-import { mergeRequirements, CANONICAL_FIELDS } from "@/lib/applicationFields"
+import { mergeRequirements, CANONICAL_FIELDS, type CompanyRequirementRow } from "@/lib/applicationFields"
+import CompanyRequirements from "@/components/CompanyRequirements"
+
 
 const DURATION_PRESETS = ["2 Months", "3 Months", "4 Months", "5 Months", "6 Months"]
 const TYPE_PRESETS = ["SIWES", "NYSC", "Placement", "Other"]
@@ -25,7 +27,9 @@ const Apply = () => {
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
   const [company, setCompany] = useState<any>(null)
   const [fields, setFields] = useState<ReturnType<typeof mergeRequirements>>([])
+  const [rawRequirements, setRawRequirements] = useState<CompanyRequirementRow[]>([])
   const [profile, setProfile] = useState<any>(null)
+
   const [uid, setUid] = useState<string>("")
   const [info, setInfo] = useState<Record<string, string>>({})
   const [docs, setDocs] = useState<Record<string, string>>({}) // fieldKey -> storage path
@@ -55,8 +59,10 @@ const Apply = () => {
       }
       const co = (coData as any[])[0]
       setCompany(co)
+      setRawRequirements(((reqData as any[]) || []) as CompanyRequirementRow[])
       const merged = mergeRequirements((reqData as any[]) || [])
       setFields(merged)
+
 
       const p = prof as any
       setProfile(p)
@@ -194,12 +200,15 @@ const Apply = () => {
           <Card className="mb-6 border-destructive"><CardContent className="pt-6 text-sm text-destructive">Applications are currently closed for this company.</CardContent></Card>
         )}
 
+        <CompanyRequirements companyName={company.name} overrides={rawRequirements} />
+
         {company.instructions && (
           <Card className="mb-6 bg-muted/30">
             <CardHeader><CardTitle className="text-base">Instructions from {company.name}</CardTitle></CardHeader>
             <CardContent className="whitespace-pre-wrap text-sm text-ink-soft">{company.instructions}</CardContent>
           </Card>
         )}
+
 
         <Card className="mb-6">
           <CardHeader><CardTitle className="text-lg">Your information</CardTitle></CardHeader>
