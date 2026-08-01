@@ -55,8 +55,20 @@ export function resolveDocumentKeys(input: string): { keys: string[]; unmatched:
   const aliases: Record<string, string> = {
     cv: "doc_cv",
     resume: "doc_cv",
-    curriculum vitae_placeholder: "doc_cv",
+    "curriculum vitae": "doc_cv",
+    passport: "doc_passport",
+    "passport photo": "doc_passport",
+    id: "doc_gov_id",
+    "id card": "doc_student_id",
+    "school id": "doc_student_id",
+    nin: "doc_gov_id",
+    siwes: "doc_siwes_letter",
+    "introduction letter": "doc_siwes_letter",
+    "school letter": "doc_siwes_letter",
+    waec: "doc_waec",
+    "birth certificate": "doc_birth_cert",
   }
+
   const tokens = input.split(/[,;|\n]/).map(t => t.trim()).filter(Boolean)
   const keys: string[] = []
   const unmatched: string[] = []
