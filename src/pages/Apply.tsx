@@ -194,12 +194,15 @@ const Apply = () => {
           <Card className="mb-6 border-destructive"><CardContent className="pt-6 text-sm text-destructive">Applications are currently closed for this company.</CardContent></Card>
         )}
 
+        <CompanyRequirements companyName={company.name} overrides={rawRequirements} />
+
         {company.instructions && (
           <Card className="mb-6 bg-muted/30">
             <CardHeader><CardTitle className="text-base">Instructions from {company.name}</CardTitle></CardHeader>
             <CardContent className="whitespace-pre-wrap text-sm text-ink-soft">{company.instructions}</CardContent>
           </Card>
         )}
+
 
         <Card className="mb-6">
           <CardHeader><CardTitle className="text-lg">Your information</CardTitle></CardHeader>
