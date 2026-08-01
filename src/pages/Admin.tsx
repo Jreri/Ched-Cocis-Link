@@ -282,10 +282,24 @@ export default function Admin() {
       const deptByName = new Map(departments.map(d => [d.name.toLowerCase(), d.id]))
       const deptBySlug = new Map(departments.map(d => [d.slug.toLowerCase(), d.id]))
 
-      let ok = 0, failed = 0
+      const existingNames = new Set(companies.map(c => c.name.trim().toLowerCase()))
+      const seenInFile = new Set<string>()
+      const imported: string[] = []
+      const skippedDuplicates: string[] = []
+      const failedRows: string[] = []
+      const unmatchedReqs = new Set<string>()
+
       for (const r of rows) {
         const name = (r.name || r["company name"] || "").trim()
-        if (!name) { failed++; continue }
+        if (!name) { failedRows.push("(unnamed row)"); continue }
+        const nameKey = name.toLowerCase()
+        if (existingNames.has(nameKey) || seenInFile.has(nameKey)) { skippedDuplicates.push(name); continue }
+        seenInFile.add(nameKey)
+
+        const reqText = (r.requirements || r["internship requirements"] || r["required documents"] || r.documents || "").trim()
+        const { keys: reqKeys, unmatched } = reqText ? resolveDocumentKeys(reqText) : { keys: [], unmatched: [] }
+        unmatched.forEach(u => unmatchedReqs.add(u))
+
         const state = (r.state || "").trim() || "Lagos State"
         const payload = {
           name,
@@ -299,12 +313,31 @@ export default function Admin() {
           contact_phone: (r["contact phone"] || r.contact_phone || r.phone || "").trim() || null,
           internship_email: (r["hr email"] || r.hr_email || r["hr_email"] || r["internship email"] || r.internship_email || "").trim() || null,
           internship_position: (r.position || r["internship position"] || r.internship_position || "").trim() || null,
-          instructions: (r.requirements || r["internship requirements"] || r.instructions || "").trim() || null,
+          instructions: (r.instructions || (unmatched.length ? `Additional requirements: ${unmatched.join(", ")}` : "")).trim() || null,
           applications_enabled: true,
           is_active: true,
         }
         const { data: ins, error } = await supabase.from("companies").insert(payload).select("id").single()
-        if (error || !ins) { failed++; continue }
+        if (error || !ins) {
+          if ((error as any)?.code === "23505") skippedDuplicates.push(name)
+          else failedRows.push(name)
+          continue
+        }
+        existingNames.add(nameKey)
+
+        // Link requirements: listed documents become required, all others hidden for this company
+        if (reqKeys.length) {
+          const reqRows = DOCUMENT_FIELDS.map((f, i) => ({
+            company_id: ins.id,
+            field_key: f.key,
+            kind: f.kind,
+            label: f.label,
+            requirement: (reqKeys.includes(f.key) ? "required" : "hidden") as FieldReq,
+            sort_order: i,
+          }))
+          await supabase.from("company_requirements").insert(reqRows)
+        }
+
         const deptField = (r.departments || r.department || "").trim()
         let deptIds: string[] = []
         if (deptField) {
@@ -318,9 +351,11 @@ export default function Admin() {
         if (deptIds.length) {
           await supabase.from("company_departments").insert(deptIds.map(did => ({ company_id: ins.id, department_id: did })))
         }
-        ok++
+        imported.push(name)
       }
-      toast({ title: "Bulk import complete", description: `${ok} added, ${failed} skipped.` })
+      setImportSummary({ imported, skippedDuplicates, failedRows, unmatchedReqs: Array.from(unmatchedReqs) })
+      toast({ title: "Bulk import complete", description: `${imported.length} imported, ${skippedDuplicates.length} duplicates skipped.` })
+
       await loadAll()
     } catch (e: any) {
       toast({ title: "Import failed", description: e.message ?? String(e) })
