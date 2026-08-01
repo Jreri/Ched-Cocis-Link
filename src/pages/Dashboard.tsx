@@ -299,7 +299,17 @@ const Dashboard = () => {
             </Card>
           </div>
         </section>
+
+        {/* 4. Full company directory */}
+        <section className="mt-16">
+          <div className="mb-6">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
+            <h2 className="font-display text-2xl md:text-3xl text-ink">Browse every company</h2>
+          </div>
+          <CompanyDirectory />
+        </section>
       </main>
+
       <Footer />
     </div>
   )
