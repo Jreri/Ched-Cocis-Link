@@ -84,6 +84,26 @@ export default function Admin() {
   } | null>(null)
   const [library, setLibrary] = useState<LibraryItem[]>([])
   const libraryRef = useRef<LibraryItem[]>([])
+  const [newReqName, setNewReqName] = useState("")
+
+  const addLibraryItem = async () => {
+    const name = newReqName.trim()
+    if (!name) return
+    if (
+      library.some(l => l.name.trim().toLowerCase() === name.toLowerCase()) ||
+      CANONICAL_FIELDS.some(f => f.label.trim().toLowerCase() === name.toLowerCase())
+    ) {
+      toast({ title: "Already exists", description: `"${name}" is already in the library.`, variant: "destructive" })
+      return
+    }
+    const { error } = await supabase
+      .from("requirement_library")
+      .insert({ name, field_key: requirementFieldKey(name), kind: "document" })
+    if (error) { toast({ title: "Could not add", description: error.message, variant: "destructive" }); return }
+    setNewReqName("")
+    await loadAll()
+    toast({ title: "Requirement added", description: name })
+  }
 
   const loadAll = async () => {
     const [{ data: cs }, { data: ds }, { data: cd }, { data: lib }] = await Promise.all([
