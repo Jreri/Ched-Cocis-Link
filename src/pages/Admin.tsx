@@ -530,7 +530,43 @@ export default function Admin() {
           </div>
         </section>
 
+        {/* Requirements library */}
+        <section className="mb-16">
+          <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Library</div>
+              <h2 className="font-display text-2xl md:text-3xl text-ink">Requirements library</h2>
+            </div>
+            <div className="text-sm text-muted-foreground">{library.length} reusable requirements</div>
+          </div>
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                CSV imports match these names case-insensitively and create new entries automatically when a requirement doesn't exist yet.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {CANONICAL_FIELDS.filter(f => f.kind === "document").map(f => (
+                  <Badge key={f.key} variant="secondary" className="font-normal">{f.label}</Badge>
+                ))}
+                {library.filter(l => !CANONICAL_FIELDS.some(f => f.key === l.field_key)).map(l => (
+                  <Badge key={l.id} variant="outline" className="font-normal">{l.name}</Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newReqName}
+                  onChange={e => setNewReqName(e.target.value)}
+                  placeholder="Add a requirement, e.g. Police Clearance Certificate"
+                  className="max-w-md"
+                />
+                <Button variant="outline" onClick={addLibraryItem} disabled={!newReqName.trim()}>Add</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* 3. Directory */}
+
         <section>
           <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
             <div>
