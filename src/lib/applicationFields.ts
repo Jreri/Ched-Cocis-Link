@@ -45,7 +45,24 @@ export const CANONICAL_FIELDS: CanonicalField[] = [
 
 export const DOCUMENT_FIELDS = CANONICAL_FIELDS.filter(f => f.kind === "document")
 
+/** Info fields that appear on EVERY application form and can never be hidden by a company. */
+export const DEFAULT_INFO_KEYS = [
+  "full_name",
+  "phone",
+  "email",
+  "date_of_birth",
+  "university",
+  "department",
+  "matric_number",
+]
+
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+
+/** Stable field key for a requirement created from free text, e.g. "Police Clearance" -> doc_police_clearance */
+export function requirementFieldKey(name: string) {
+  return "doc_" + norm(name).replace(/\s+/g, "_").slice(0, 48)
+}
+
 
 /**
  * Resolve a free-text requirements string (from CSV) into canonical document field keys.
@@ -95,32 +112,35 @@ export type CompanyRequirementRow = {
   sort_order: number
 }
 
-/** Merge canonical defaults with company overrides. Overrides can hide fields or add custom ones. */
+/** Merge canonical defaults with company overrides. Overrides can hide fields or add extra ones. */
 export function mergeRequirements(overrides: CompanyRequirementRow[]) {
+  const canonicalKeys = new Set(CANONICAL_FIELDS.map(f => f.key))
   const overrideMap = new Map(overrides.map(o => [o.field_key, o]))
   const merged: (CanonicalField & { requirement: FieldReq; sort_order: number })[] = []
   CANONICAL_FIELDS.forEach((f, i) => {
     const o = overrideMap.get(f.key)
-    if (o?.requirement === "hidden") return
+    const isDefaultInfo = DEFAULT_INFO_KEYS.includes(f.key)
+    if (o?.requirement === "hidden" && !isDefaultInfo) return
     merged.push({
       ...f,
-      requirement: o?.requirement ?? f.default,
+      requirement: isDefaultInfo ? "required" : (o?.requirement ?? f.default),
       sort_order: o?.sort_order ?? i,
     })
   })
-  // Custom fields (only from overrides)
+  // Company-specific extras from the requirements library (documents or custom inputs)
   overrides
-    .filter(o => o.kind === "custom" && o.requirement !== "hidden")
+    .filter(o => !canonicalKeys.has(o.field_key) && o.requirement !== "hidden")
     .forEach(o => {
       merged.push({
         key: o.field_key,
         label: o.label,
-        kind: "custom",
+        kind: o.kind === "info" ? "info" : o.kind,
         default: o.requirement,
         input: "text",
         requirement: o.requirement,
-        sort_order: o.sort_order ?? 999,
+        sort_order: (o.sort_order ?? 0) + 1000,
       })
     })
   return merged.sort((a, b) => a.sort_order - b.sort_order)
+
 }

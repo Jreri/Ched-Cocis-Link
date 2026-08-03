@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import Header from "@/components/Header"
@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText, Upload } from "lucide-react"
 import Papa from "papaparse"
-import { CANONICAL_FIELDS, DOCUMENT_FIELDS, resolveDocumentKeys, type FieldReq } from "@/lib/applicationFields"
+import { CANONICAL_FIELDS, DOCUMENT_FIELDS, resolveDocumentKeys, requirementFieldKey, type FieldReq } from "@/lib/applicationFields"
 import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Company = {
@@ -38,6 +38,8 @@ type Company = {
 }
 
 type Department = { id: string; name: string; slug: string }
+
+type LibraryItem = { id: string; name: string; field_key: string; kind: string }
 
 const emptyForm = {
   id: "" as string | "",
@@ -80,22 +82,47 @@ export default function Admin() {
     failedRows: string[]
     unmatchedReqs: string[]
   } | null>(null)
+  const [library, setLibrary] = useState<LibraryItem[]>([])
+  const libraryRef = useRef<LibraryItem[]>([])
+  const [newReqName, setNewReqName] = useState("")
 
+  const addLibraryItem = async () => {
+    const name = newReqName.trim()
+    if (!name) return
+    if (
+      library.some(l => l.name.trim().toLowerCase() === name.toLowerCase()) ||
+      CANONICAL_FIELDS.some(f => f.label.trim().toLowerCase() === name.toLowerCase())
+    ) {
+      toast({ title: "Already exists", description: `"${name}" is already in the library.`, variant: "destructive" })
+      return
+    }
+    const { error } = await supabase
+      .from("requirement_library")
+      .insert({ name, field_key: requirementFieldKey(name), kind: "document" })
+    if (error) { toast({ title: "Could not add", description: error.message, variant: "destructive" }); return }
+    setNewReqName("")
+    await loadAll()
+    toast({ title: "Requirement added", description: name })
+  }
 
   const loadAll = async () => {
-    const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
+    const [{ data: cs }, { data: ds }, { data: cd }, { data: lib }] = await Promise.all([
       supabase.from("companies").select("*").order("name"),
       supabase.from("departments").select("id,name,slug").order("name"),
       supabase.from("company_departments").select("company_id, department_id"),
+      supabase.from("requirement_library").select("id,name,field_key,kind").order("name"),
     ])
     setCompanies((cs as Company[]) || [])
     setDepartments((ds as Department[]) || [])
+    setLibrary((lib as LibraryItem[]) || [])
+    libraryRef.current = (lib as LibraryItem[]) || []
     const map: Record<string, string[]> = {}
     ;(cd || []).forEach((r: any) => {
       map[r.company_id] = [...(map[r.company_id] || []), r.department_id]
     })
     setCompanyDepts(map)
   }
+
 
   useEffect(() => {
     ;(async () => {
@@ -231,12 +258,13 @@ export default function Admin() {
         .filter(([, v]) => v && v !== "default")
         .map(([field_key, v], i) => {
           const canon = CANONICAL_FIELDS.find(f => f.key === field_key)
+          const lib = library.find(l => l.field_key === field_key)
           const requirement = v as FieldReq
           return {
             company_id: companyId,
             field_key,
-            kind: canon?.kind ?? "info",
-            label: canon?.label ?? field_key,
+            kind: (canon?.kind ?? lib?.kind ?? "info") as any,
+            label: canon?.label ?? lib?.name ?? field_key,
             requirement,
             sort_order: i,
           }
@@ -275,6 +303,46 @@ export default function Admin() {
     setForm(f => ({ ...f, department_ids: f.department_ids.includes(id) ? f.department_ids.filter(x => x !== id) : [...f.department_ids, id] }))
   }
 
+  /**
+   * Resolve a free-text Requirements cell into concrete requirement fields.
+   * Matches canonical fields first, then the reusable library (case-insensitive),
+   * and creates a new library entry when nothing matches.
+   */
+  const resolveRequirementTokens = async (text: string) => {
+    const tokens = text.split(/[,;|\n]/).map(t => t.trim()).filter(Boolean)
+    const out: { field_key: string; label: string; kind: "document" | "custom" }[] = []
+    for (const token of tokens) {
+      const { keys } = resolveDocumentKeys(token)
+      if (keys.length) {
+        const f = DOCUMENT_FIELDS.find(d => d.key === keys[0])!
+        if (!out.some(o => o.field_key === f.key)) out.push({ field_key: f.key, label: f.label, kind: "document" })
+        continue
+      }
+      const key = token.toLowerCase()
+      let entry = libraryRef.current.find(l => l.name.trim().toLowerCase() === key)
+      if (!entry) {
+        const field_key = requirementFieldKey(token)
+        const { data, error } = await supabase
+          .from("requirement_library")
+          .insert({ name: token, field_key, kind: "document" })
+          .select("id,name,field_key,kind")
+          .single()
+        if (data) entry = data as LibraryItem
+        else if (error) {
+          const { data: existing } = await supabase
+            .from("requirement_library").select("id,name,field_key,kind").eq("field_key", field_key).maybeSingle()
+          entry = (existing as LibraryItem) || undefined
+        }
+        if (entry) libraryRef.current = [...libraryRef.current, entry]
+      }
+      if (entry && !out.some(o => o.field_key === entry!.field_key)) {
+        out.push({ field_key: entry.field_key, label: entry.name, kind: "document" })
+      }
+    }
+    return out
+  }
+
+
   const handleBulkCsv = async (file: File) => {
     setBulkImporting(true)
     try {
@@ -304,8 +372,8 @@ export default function Admin() {
         seenInFile.add(nameKey)
 
         const reqText = (r.requirements || r["internship requirements"] || r["required documents"] || r.documents || "").trim()
-        const { keys: reqKeys, unmatched } = reqText ? resolveDocumentKeys(reqText) : { keys: [], unmatched: [] }
-        unmatched.forEach(u => unmatchedReqs.add(u))
+        const resolved = reqText ? await resolveRequirementTokens(reqText) : []
+
 
         const state = (r.state || "").trim() || "Lagos State"
         const payload = {
@@ -320,7 +388,7 @@ export default function Admin() {
           contact_phone: (r["contact phone"] || r.contact_phone || r.phone || "").trim() || null,
           internship_email: (r["hr email"] || r.hr_email || r["hr_email"] || r["internship email"] || r.internship_email || "").trim() || null,
           internship_position: (r.position || r["internship position"] || r.internship_position || "").trim() || null,
-          instructions: (r.instructions || (unmatched.length ? `Additional requirements: ${unmatched.join(", ")}` : "")).trim() || null,
+          instructions: (r.instructions || "").trim() || null,
           applications_enabled: true,
           is_active: true,
         }
@@ -332,18 +400,30 @@ export default function Admin() {
         }
         existingNames.add(nameKey)
 
-        // Link requirements: listed documents become required, all others hidden for this company
-        if (reqKeys.length) {
-          const reqRows = DOCUMENT_FIELDS.map((f, i) => ({
-            company_id: ins.id,
-            field_key: f.key,
-            kind: f.kind,
-            label: f.label,
-            requirement: (reqKeys.includes(f.key) ? "required" : "hidden") as FieldReq,
-            sort_order: i,
-          }))
+        // Link requirements: listed ones become required, other canonical documents hidden
+        if (resolved.length) {
+          const listed = new Set(resolved.map(x => x.field_key))
+          const reqRows = [
+            ...DOCUMENT_FIELDS.filter(f => !listed.has(f.key)).map((f, i) => ({
+              company_id: ins.id,
+              field_key: f.key,
+              kind: f.kind,
+              label: f.label,
+              requirement: "hidden" as FieldReq,
+              sort_order: 900 + i,
+            })),
+            ...resolved.map((x, i) => ({
+              company_id: ins.id,
+              field_key: x.field_key,
+              kind: x.kind,
+              label: x.label,
+              requirement: "required" as FieldReq,
+              sort_order: i,
+            })),
+          ]
           await supabase.from("company_requirements").insert(reqRows)
         }
+
 
         const deptField = (r.departments || r.department || "").trim()
         let deptIds: string[] = []
@@ -470,7 +550,43 @@ export default function Admin() {
           </div>
         </section>
 
+        {/* Requirements library */}
+        <section className="mb-16">
+          <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Library</div>
+              <h2 className="font-display text-2xl md:text-3xl text-ink">Requirements library</h2>
+            </div>
+            <div className="text-sm text-muted-foreground">{library.length} reusable requirements</div>
+          </div>
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-sm text-muted-foreground">
+                CSV imports match these names case-insensitively and create new entries automatically when a requirement doesn't exist yet.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {CANONICAL_FIELDS.filter(f => f.kind === "document").map(f => (
+                  <Badge key={f.key} variant="secondary" className="font-normal">{f.label}</Badge>
+                ))}
+                {library.filter(l => !CANONICAL_FIELDS.some(f => f.key === l.field_key)).map(l => (
+                  <Badge key={l.id} variant="outline" className="font-normal">{l.name}</Badge>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={newReqName}
+                  onChange={e => setNewReqName(e.target.value)}
+                  placeholder="Add a requirement, e.g. Police Clearance Certificate"
+                  className="max-w-md"
+                />
+                <Button variant="outline" onClick={addLibraryItem} disabled={!newReqName.trim()}>Add</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* 3. Directory */}
+
         <section>
           <div className="flex items-baseline justify-between mb-6 flex-wrap gap-2">
             <div>
@@ -605,7 +721,12 @@ export default function Admin() {
               <Label className="mb-2 block text-sm font-semibold">Application requirements</Label>
               <p className="text-xs text-muted-foreground mb-2">Override which fields applicants must submit. "Default" uses the platform standard.</p>
               <div className="border border-border rounded-lg divide-y max-h-72 overflow-y-auto">
-                {CANONICAL_FIELDS.map(f => {
+                {[
+                  ...CANONICAL_FIELDS.map(f => ({ key: f.key, label: f.label, kind: f.kind as string, default: f.default as string })),
+                  ...library
+                    .filter(l => !CANONICAL_FIELDS.some(f => f.key === l.field_key))
+                    .map(l => ({ key: l.field_key, label: l.name, kind: l.kind, default: "hidden" })),
+                ].map(f => {
                   const val = form.requirements[f.key] ?? "default"
                   return (
                     <div key={f.key} className="flex items-center gap-3 p-2 text-sm">

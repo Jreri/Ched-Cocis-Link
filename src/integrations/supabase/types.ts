@@ -314,6 +314,30 @@ export type Database = {
           },
         ]
       }
+      requirement_library: {
+        Row: {
+          created_at: string
+          field_key: string
+          id: string
+          kind: Database["public"]["Enums"]["field_kind"]
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          field_key: string
+          id?: string
+          kind?: Database["public"]["Enums"]["field_kind"]
+          name: string
+        }
+        Update: {
+          created_at?: string
+          field_key?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["field_kind"]
+          name?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -354,6 +378,7 @@ export type Database = {
           state: string
         }[]
       }
+      company_visible: { Args: { _company_id: string }; Returns: boolean }
       get_available_cities: {
         Args: { _state: string }
         Returns: {
