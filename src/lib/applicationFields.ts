@@ -45,7 +45,24 @@ export const CANONICAL_FIELDS: CanonicalField[] = [
 
 export const DOCUMENT_FIELDS = CANONICAL_FIELDS.filter(f => f.kind === "document")
 
+/** Info fields that appear on EVERY application form and can never be hidden by a company. */
+export const DEFAULT_INFO_KEYS = [
+  "full_name",
+  "phone",
+  "email",
+  "date_of_birth",
+  "university",
+  "department",
+  "matric_number",
+]
+
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()
+
+/** Stable field key for a requirement created from free text, e.g. "Police Clearance" -> doc_police_clearance */
+export function requirementFieldKey(name: string) {
+  return "doc_" + norm(name).replace(/\s+/g, "_").slice(0, 48)
+}
+
 
 /**
  * Resolve a free-text requirements string (from CSV) into canonical document field keys.
