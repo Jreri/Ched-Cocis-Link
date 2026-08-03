@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
 import { Loader2, Pencil, Plus, Search, Trash2, Building2, MapPin, Layers, FileText, Upload } from "lucide-react"
 import Papa from "papaparse"
-import { CANONICAL_FIELDS, DOCUMENT_FIELDS, resolveDocumentKeys, type FieldReq } from "@/lib/applicationFields"
+import { CANONICAL_FIELDS, DOCUMENT_FIELDS, resolveDocumentKeys, requirementFieldKey, type FieldReq } from "@/lib/applicationFields"
 import NextStepsJourney, { type JourneyStep } from "@/components/NextStepsJourney"
 
 type Company = {
