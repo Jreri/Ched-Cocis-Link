@@ -82,22 +82,27 @@ export default function Admin() {
     failedRows: string[]
     unmatchedReqs: string[]
   } | null>(null)
-
+  const [library, setLibrary] = useState<LibraryItem[]>([])
+  const libraryRef = useRef<LibraryItem[]>([])
 
   const loadAll = async () => {
-    const [{ data: cs }, { data: ds }, { data: cd }] = await Promise.all([
+    const [{ data: cs }, { data: ds }, { data: cd }, { data: lib }] = await Promise.all([
       supabase.from("companies").select("*").order("name"),
       supabase.from("departments").select("id,name,slug").order("name"),
       supabase.from("company_departments").select("company_id, department_id"),
+      supabase.from("requirement_library").select("id,name,field_key,kind").order("name"),
     ])
     setCompanies((cs as Company[]) || [])
     setDepartments((ds as Department[]) || [])
+    setLibrary((lib as LibraryItem[]) || [])
+    libraryRef.current = (lib as LibraryItem[]) || []
     const map: Record<string, string[]> = {}
     ;(cd || []).forEach((r: any) => {
       map[r.company_id] = [...(map[r.company_id] || []), r.department_id]
     })
     setCompanyDepts(map)
   }
+
 
   useEffect(() => {
     ;(async () => {
