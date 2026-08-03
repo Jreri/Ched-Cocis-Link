@@ -664,7 +664,12 @@ export default function Admin() {
               <Label className="mb-2 block text-sm font-semibold">Application requirements</Label>
               <p className="text-xs text-muted-foreground mb-2">Override which fields applicants must submit. "Default" uses the platform standard.</p>
               <div className="border border-border rounded-lg divide-y max-h-72 overflow-y-auto">
-                {CANONICAL_FIELDS.map(f => {
+                {[
+                  ...CANONICAL_FIELDS.map(f => ({ key: f.key, label: f.label, kind: f.kind as string, default: f.default as string })),
+                  ...library
+                    .filter(l => !CANONICAL_FIELDS.some(f => f.key === l.field_key))
+                    .map(l => ({ key: l.field_key, label: l.name, kind: l.kind, default: "hidden" })),
+                ].map(f => {
                   const val = form.requirements[f.key] ?? "default"
                   return (
                     <div key={f.key} className="flex items-center gap-3 p-2 text-sm">
