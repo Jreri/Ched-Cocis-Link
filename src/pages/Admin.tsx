@@ -275,6 +275,46 @@ export default function Admin() {
     setForm(f => ({ ...f, department_ids: f.department_ids.includes(id) ? f.department_ids.filter(x => x !== id) : [...f.department_ids, id] }))
   }
 
+  /**
+   * Resolve a free-text Requirements cell into concrete requirement fields.
+   * Matches canonical fields first, then the reusable library (case-insensitive),
+   * and creates a new library entry when nothing matches.
+   */
+  const resolveRequirementTokens = async (text: string) => {
+    const tokens = text.split(/[,;|\n]/).map(t => t.trim()).filter(Boolean)
+    const out: { field_key: string; label: string; kind: "document" | "custom" }[] = []
+    for (const token of tokens) {
+      const { keys } = resolveDocumentKeys(token)
+      if (keys.length) {
+        const f = DOCUMENT_FIELDS.find(d => d.key === keys[0])!
+        if (!out.some(o => o.field_key === f.key)) out.push({ field_key: f.key, label: f.label, kind: "document" })
+        continue
+      }
+      const key = token.toLowerCase()
+      let entry = libraryRef.current.find(l => l.name.trim().toLowerCase() === key)
+      if (!entry) {
+        const field_key = requirementFieldKey(token)
+        const { data, error } = await supabase
+          .from("requirement_library")
+          .insert({ name: token, field_key, kind: "document" })
+          .select("id,name,field_key,kind")
+          .single()
+        if (data) entry = data as LibraryItem
+        else if (error) {
+          const { data: existing } = await supabase
+            .from("requirement_library").select("id,name,field_key,kind").eq("field_key", field_key).maybeSingle()
+          entry = (existing as LibraryItem) || undefined
+        }
+        if (entry) libraryRef.current = [...libraryRef.current, entry]
+      }
+      if (entry && !out.some(o => o.field_key === entry!.field_key)) {
+        out.push({ field_key: entry.field_key, label: entry.name, kind: "document" })
+      }
+    }
+    return out
+  }
+
+
   const handleBulkCsv = async (file: File) => {
     setBulkImporting(true)
     try {
