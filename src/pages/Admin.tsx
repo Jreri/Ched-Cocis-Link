@@ -238,12 +238,13 @@ export default function Admin() {
         .filter(([, v]) => v && v !== "default")
         .map(([field_key, v], i) => {
           const canon = CANONICAL_FIELDS.find(f => f.key === field_key)
+          const lib = library.find(l => l.field_key === field_key)
           const requirement = v as FieldReq
           return {
             company_id: companyId,
             field_key,
-            kind: canon?.kind ?? "info",
-            label: canon?.label ?? field_key,
+            kind: (canon?.kind ?? lib?.kind ?? "info") as any,
+            label: canon?.label ?? lib?.name ?? field_key,
             requirement,
             sort_order: i,
           }
