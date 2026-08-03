@@ -39,6 +39,8 @@ type Company = {
 
 type Department = { id: string; name: string; slug: string }
 
+type LibraryItem = { id: string; name: string; field_key: string; kind: string }
+
 const emptyForm = {
   id: "" as string | "",
   name: "",
