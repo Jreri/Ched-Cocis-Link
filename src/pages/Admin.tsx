@@ -332,18 +332,30 @@ export default function Admin() {
         }
         existingNames.add(nameKey)
 
-        // Link requirements: listed documents become required, all others hidden for this company
-        if (reqKeys.length) {
-          const reqRows = DOCUMENT_FIELDS.map((f, i) => ({
-            company_id: ins.id,
-            field_key: f.key,
-            kind: f.kind,
-            label: f.label,
-            requirement: (reqKeys.includes(f.key) ? "required" : "hidden") as FieldReq,
-            sort_order: i,
-          }))
+        // Link requirements: listed ones become required, other canonical documents hidden
+        if (resolved.length) {
+          const listed = new Set(resolved.map(x => x.field_key))
+          const reqRows = [
+            ...DOCUMENT_FIELDS.filter(f => !listed.has(f.key)).map((f, i) => ({
+              company_id: ins.id,
+              field_key: f.key,
+              kind: f.kind,
+              label: f.label,
+              requirement: "hidden" as FieldReq,
+              sort_order: 900 + i,
+            })),
+            ...resolved.map((x, i) => ({
+              company_id: ins.id,
+              field_key: x.field_key,
+              kind: x.kind,
+              label: x.label,
+              requirement: "required" as FieldReq,
+              sort_order: i,
+            })),
+          ]
           await supabase.from("company_requirements").insert(reqRows)
         }
+
 
         const deptField = (r.departments || r.department || "").trim()
         let deptIds: string[] = []
