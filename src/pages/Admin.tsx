@@ -304,8 +304,8 @@ export default function Admin() {
         seenInFile.add(nameKey)
 
         const reqText = (r.requirements || r["internship requirements"] || r["required documents"] || r.documents || "").trim()
-        const { keys: reqKeys, unmatched } = reqText ? resolveDocumentKeys(reqText) : { keys: [], unmatched: [] }
-        unmatched.forEach(u => unmatchedReqs.add(u))
+        const resolved = reqText ? await resolveRequirementTokens(reqText) : []
+
 
         const state = (r.state || "").trim() || "Lagos State"
         const payload = {
