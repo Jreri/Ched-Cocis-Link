@@ -320,7 +320,7 @@ export default function Admin() {
           contact_phone: (r["contact phone"] || r.contact_phone || r.phone || "").trim() || null,
           internship_email: (r["hr email"] || r.hr_email || r["hr_email"] || r["internship email"] || r.internship_email || "").trim() || null,
           internship_position: (r.position || r["internship position"] || r.internship_position || "").trim() || null,
-          instructions: (r.instructions || (unmatched.length ? `Additional requirements: ${unmatched.join(", ")}` : "")).trim() || null,
+          instructions: (r.instructions || "").trim() || null,
           applications_enabled: true,
           is_active: true,
         }
