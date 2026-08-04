@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Building2, Lock, Unlock, MapPin, Search, Loader2 } from "lucide-react"
+import { Building2, Lock, Unlock, MapPin, Search, Loader2, ArrowRight } from "lucide-react"
 import CompanyRequirements from "@/components/CompanyRequirements"
 import type { CompanyRequirementRow } from "@/lib/applicationFields"
 
@@ -22,7 +22,19 @@ type Row = {
 }
 
 /** Full company directory visible to every signed-in student. Details stay gated by payment. */
-export default function CompanyDirectory({ limit }: { limit?: number }) {
+export default function CompanyDirectory({
+  limit,
+  showSearch = true,
+  viewAllTo,
+  title = "All companies",
+  subtitle = "Every placement open to your department. Unlock a city to see contact details and apply.",
+}: {
+  limit?: number
+  showSearch?: boolean
+  viewAllTo?: string
+  title?: string
+  subtitle?: string
+}) {
   const [rows, setRows] = useState<Row[]>([])
   const [reqs, setReqs] = useState<Record<string, CompanyRequirementRow[]>>({})
   const [loading, setLoading] = useState(true)
@@ -58,18 +70,18 @@ export default function CompanyDirectory({ limit }: { limit?: number }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <CardTitle className="font-display text-xl text-ink flex items-center gap-2">
-              <Building2 className="w-5 h-5" /> All companies
+              <Building2 className="w-5 h-5" /> {title}
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              Every placement open to your department. Unlock a city to see contact details and apply.
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
           <Badge variant="outline">{rows.length} total</Badge>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search companies or cities…" className="pl-9" />
-        </div>
+        {showSearch && (
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search companies or cities…" className="pl-9" />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {loading && (
@@ -115,6 +127,13 @@ export default function CompanyDirectory({ limit }: { limit?: number }) {
             </div>
           </div>
         ))}
+        {viewAllTo && !loading && rows.length > 0 && (
+          <Button asChild variant="outline" className="w-full rounded-full">
+            <Link to={viewAllTo}>
+              View all {rows.length} companies <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </Button>
+        )}
       </CardContent>
     </Card>
   )

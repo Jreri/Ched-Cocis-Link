@@ -34,6 +34,17 @@ Deno.serve(async (req) => {
     };
     if (!company_id) return json({ error: "company_id required" }, 400);
 
+    // Prevent duplicate submissions to the same company
+    const { data: existing } = await admin
+      .from("applications")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("company_id", company_id)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      return json({ error: "You have already applied to this company." }, 409);
+    }
+
     // Verify user can apply (RLS-guarded RPC)
     const { data: companies, error: cErr } = await supabase.rpc("get_unlocked_company", { _company_id: company_id });
     if (cErr) return json({ error: cErr.message }, 400);

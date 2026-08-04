@@ -302,13 +302,19 @@ const Dashboard = () => {
           </div>
         </section>
 
-        {/* 4. Full company directory */}
+        {/* 4. Featured companies */}
         <section className="mt-16">
           <div className="mb-6">
             <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
-            <h2 className="font-display text-2xl md:text-3xl text-ink">Browse every company</h2>
+            <h2 className="font-display text-2xl md:text-3xl text-ink">Featured companies</h2>
           </div>
-          <CompanyDirectory />
+          <CompanyDirectory
+            limit={6}
+            showSearch={false}
+            viewAllTo="/placements"
+            title="Featured companies"
+            subtitle="A snapshot of placements open to your department."
+          />
         </section>
       </main>
 

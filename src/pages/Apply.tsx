@@ -135,10 +135,17 @@ const Apply = () => {
       const { data, error } = await supabase.functions.invoke("submit-application", {
         body: { company_id: companyId, info: infoOut, document_paths: docOut },
       })
-      if (error) throw error
+      if (error) {
+        let msg = error.message
+        try {
+          const body = await (error as any).context?.text?.()
+          if (body) msg = JSON.parse(body)?.error || msg
+        } catch { /* keep default message */ }
+        throw new Error(msg)
+      }
       if ((data as any)?.error) throw new Error((data as any).error)
       setDone(true)
-      toast.success("Application sent")
+      toast.success("Application sent to the company's HR inbox")
     } catch (e: any) {
       toast.error(e.message || "Submission failed")
     } finally {

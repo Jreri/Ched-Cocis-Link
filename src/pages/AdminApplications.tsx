@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import Header from "@/components/Header"
 import Footer from "@/components/Footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -15,14 +14,11 @@ type App = {
   id: string
   user_id: string
   company_id: string
-  status: string
   sent_to_email: string | null
   created_at: string
   documents: Record<string, string>
   snapshot: { company_name?: string; info?: Record<string, string> } | null
 }
-
-const STATUSES = ["sent", "reviewed", "accepted", "rejected"]
 
 export default function AdminApplications() {
   const navigate = useNavigate()
@@ -30,6 +26,9 @@ export default function AdminApplications() {
   const [rows, setRows] = useState<App[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [q, setQ] = useState("")
+  const [company, setCompany] = useState("all")
+  const [dept, setDept] = useState("all")
+  const [deptByUser, setDeptByUser] = useState<Record<string, string>>({})
   const [signedUrls, setSignedUrls] = useState<Record<string, Record<string, string>>>({})
 
   useEffect(() => { document.title = "Applications — Admin" }, [])
@@ -38,23 +37,36 @@ export default function AdminApplications() {
     ;(async () => {
       const { data: sess } = await supabase.auth.getSession()
       if (!sess.session) { navigate("/login"); return }
-      const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: sess.session.user.id, _role: "admin" })
-      if (!isAdmin) { navigate("/"); return }
       const { data, error } = await supabase.from("applications")
-        .select("id, user_id, company_id, status, sent_to_email, created_at, documents, snapshot")
+        .select("id, user_id, company_id, sent_to_email, created_at, documents, snapshot")
         .order("created_at", { ascending: false })
       if (error) toast.error(error.message)
-      setRows((data as App[]) || [])
+      const list = (data as App[]) || []
+      setRows(list)
+
+      const userIds = [...new Set(list.map(r => r.user_id))]
+      if (userIds.length) {
+        const { data: profs } = await supabase.from("profiles")
+          .select("id, department_id, departments:department_id(name)")
+          .in("id", userIds)
+        const map: Record<string, string> = {}
+        for (const p of (profs as any[]) || []) {
+          map[p.id] = p.departments?.name || "Unassigned"
+        }
+        setDeptByUser(map)
+      }
       setLoading(false)
     })()
   }, [navigate])
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("applications").update({ status }).eq("id", id)
-    if (error) return toast.error(error.message)
-    setRows(rs => rs.map(r => r.id === id ? { ...r, status } : r))
-    toast.success("Updated")
-  }
+  const companies = useMemo(
+    () => [...new Set(rows.map(r => r.snapshot?.company_name).filter(Boolean) as string[])].sort(),
+    [rows]
+  )
+  const departments = useMemo(
+    () => [...new Set(Object.values(deptByUser))].sort(),
+    [deptByUser]
+  )
 
   const toggle = async (a: App) => {
     if (expanded === a.id) { setExpanded(null); return }
@@ -71,6 +83,8 @@ export default function AdminApplications() {
   }
 
   const filtered = rows.filter(r => {
+    if (company !== "all" && r.snapshot?.company_name !== company) return false
+    if (dept !== "all" && (deptByUser[r.user_id] || "Unassigned") !== dept) return false
     if (!q) return true
     const s = q.toLowerCase()
     const info = r.snapshot?.info || {}
@@ -88,13 +102,28 @@ export default function AdminApplications() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-24 md:py-28 max-w-6xl">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <div>
-            <Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/admin"><ArrowLeft className="w-4 h-4 mr-1" />Back to admin</Link></Button>
-            <h1 className="text-3xl md:text-4xl font-display">Applications</h1>
-            <p className="text-muted-foreground text-sm">{rows.length} total submissions.</p>
-          </div>
-          <Input placeholder="Search company, applicant…" value={q} onChange={e => setQ(e.target.value)} className="max-w-xs" />
+        <div className="mb-6">
+          <Button asChild variant="ghost" size="sm" className="mb-2"><Link to="/admin"><ArrowLeft className="w-4 h-4 mr-1" />Back to admin</Link></Button>
+          <h1 className="text-3xl md:text-4xl font-display">Applications</h1>
+          <p className="text-muted-foreground text-sm">{rows.length} total submissions · {filtered.length} shown.</p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3 mb-6">
+          <Input placeholder="Search company, applicant…" value={q} onChange={e => setQ(e.target.value)} />
+          <Select value={company} onValueChange={setCompany}>
+            <SelectTrigger><SelectValue placeholder="All companies" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All companies</SelectItem>
+              {companies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={dept} onValueChange={setDept}>
+            <SelectTrigger><SelectValue placeholder="All departments" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All departments</SelectItem>
+              {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
 
         <Card>
@@ -120,15 +149,8 @@ export default function AdminApplications() {
                             <div className="text-sm truncate">{a.snapshot?.company_name || "—"}</div>
                             <div className="text-xs text-muted-foreground truncate">{a.sent_to_email || ""}</div>
                           </div>
+                          <div className="text-xs text-muted-foreground truncate">{deptByUser[a.user_id] || "Unassigned"}</div>
                           <div className="text-xs text-muted-foreground">{new Date(a.created_at).toLocaleString()}</div>
-                          <div onClick={e => e.stopPropagation()}>
-                            <Select value={a.status} onValueChange={v => updateStatus(a.id, v)}>
-                              <SelectTrigger className="h-8 w-32 capitalize"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {STATUSES.map(s => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
                         </div>
                       </button>
                       {isOpen && (
@@ -150,7 +172,7 @@ export default function AdminApplications() {
                               <div className="text-sm text-muted-foreground">None attached.</div>
                             ) : (
                               <ul className="text-sm space-y-1">
-                                {Object.entries(a.documents || {}).map(([k, _]) => {
+                                {Object.keys(a.documents || {}).map(k => {
                                   const url = signedUrls[a.id]?.[k]
                                   return (
                                     <li key={k}>

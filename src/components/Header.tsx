@@ -103,8 +103,15 @@ const Header = () => {
             {authed ? (
               <>
                 <Link to={isAdmin ? "/admin" : "/dashboard"}><Button variant="ghost" size="sm" className="rounded-full">Dashboard</Button></Link>
-                <Link to="/placements"><Button variant="ghost" size="sm" className="rounded-full">Placements</Button></Link>
-                <Link to="/profile"><Button variant="ghost" size="sm" className="rounded-full">Profile</Button></Link>
+                {isAdmin ? (
+                  <Link to="/admin/applications"><Button variant="ghost" size="sm" className="rounded-full">Applications</Button></Link>
+                ) : (
+                  <>
+                    <Link to="/placements"><Button variant="ghost" size="sm" className="rounded-full">Placements</Button></Link>
+                    <Link to="/applications"><Button variant="ghost" size="sm" className="rounded-full">My applications</Button></Link>
+                    <Link to="/profile"><Button variant="ghost" size="sm" className="rounded-full">Profile</Button></Link>
+                  </>
+                )}
                 <Button size="sm" onClick={signOut} className="rounded-full bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
               </>
             ) : (
@@ -152,8 +159,15 @@ const Header = () => {
                 {authed ? (
                   <>
                     <Link to={isAdmin ? "/admin" : "/dashboard"}><Button variant="ghost" className="w-full justify-start rounded-lg">Dashboard</Button></Link>
-                    <Link to="/placements"><Button variant="ghost" className="w-full justify-start rounded-lg">Placements</Button></Link>
-                    <Link to="/profile"><Button variant="ghost" className="w-full justify-start rounded-lg">Profile</Button></Link>
+                    {isAdmin ? (
+                      <Link to="/admin/applications"><Button variant="ghost" className="w-full justify-start rounded-lg">Applications</Button></Link>
+                    ) : (
+                      <>
+                        <Link to="/placements"><Button variant="ghost" className="w-full justify-start rounded-lg">Placements</Button></Link>
+                        <Link to="/applications"><Button variant="ghost" className="w-full justify-start rounded-lg">My applications</Button></Link>
+                        <Link to="/profile"><Button variant="ghost" className="w-full justify-start rounded-lg">Profile</Button></Link>
+                      </>
+                    )}
                     <Button onClick={signOut} className="w-full rounded-lg bg-ink text-primary-foreground hover:bg-ink/90">Sign out</Button>
                   </>
                 ) : (

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
+import CompanyDirectory from "@/components/CompanyDirectory";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -403,6 +404,14 @@ const Placements = () => {
             )}
           </div>
         </div>
+
+        <section className="mt-16">
+          <div className="mb-6">
+            <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
+            <h2 className="font-display text-2xl md:text-3xl text-ink">All eligible companies</h2>
+          </div>
+          <CompanyDirectory />
+        </section>
       </main>
       <Footer />
     </div>
