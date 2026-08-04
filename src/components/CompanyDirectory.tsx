@@ -127,6 +127,13 @@ export default function CompanyDirectory({
             </div>
           </div>
         ))}
+        {viewAllTo && !loading && rows.length > 0 && (
+          <Button asChild variant="outline" className="w-full rounded-full">
+            <Link to={viewAllTo}>
+              View all {rows.length} companies <ArrowRight className="w-4 h-4 ml-1" />
+            </Link>
+          </Button>
+        )}
       </CardContent>
     </Card>
   )
