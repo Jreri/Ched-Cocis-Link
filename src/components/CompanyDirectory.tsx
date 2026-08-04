@@ -22,7 +22,19 @@ type Row = {
 }
 
 /** Full company directory visible to every signed-in student. Details stay gated by payment. */
-export default function CompanyDirectory({ limit }: { limit?: number }) {
+export default function CompanyDirectory({
+  limit,
+  showSearch = true,
+  viewAllTo,
+  title = "All companies",
+  subtitle = "Every placement open to your department. Unlock a city to see contact details and apply.",
+}: {
+  limit?: number
+  showSearch?: boolean
+  viewAllTo?: string
+  title?: string
+  subtitle?: string
+}) {
   const [rows, setRows] = useState<Row[]>([])
   const [reqs, setReqs] = useState<Record<string, CompanyRequirementRow[]>>({})
   const [loading, setLoading] = useState(true)
