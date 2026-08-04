@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Building2, Lock, Unlock, MapPin, Search, Loader2 } from "lucide-react"
+import { Building2, Lock, Unlock, MapPin, Search, Loader2, ArrowRight } from "lucide-react"
 import CompanyRequirements from "@/components/CompanyRequirements"
 import type { CompanyRequirementRow } from "@/lib/applicationFields"
 
