@@ -70,18 +70,18 @@ export default function CompanyDirectory({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <CardTitle className="font-display text-xl text-ink flex items-center gap-2">
-              <Building2 className="w-5 h-5" /> All companies
+              <Building2 className="w-5 h-5" /> {title}
             </CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              Every placement open to your department. Unlock a city to see contact details and apply.
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
           </div>
           <Badge variant="outline">{rows.length} total</Badge>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search companies or cities…" className="pl-9" />
-        </div>
+        {showSearch && (
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search companies or cities…" className="pl-9" />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         {loading && (
