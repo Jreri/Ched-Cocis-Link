@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { useLiveData } from "@/hooks/useLiveData"
-import { useLiveData } from "@/hooks/useLiveData"
+
 
 
 
