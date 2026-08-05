@@ -401,7 +401,7 @@ const Placements = () => {
                           <Button
                             size="sm"
                             onClick={() => pay(selectedState, c.city)}
-                            disabled={payingKey === k}
+                            disabled={!!payingKey}
                           >
                             {payingKey === k ? (
                               <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Redirecting…</>
@@ -469,7 +469,7 @@ const Placements = () => {
             <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
             <h2 className="font-display text-2xl md:text-3xl text-ink">All eligible companies</h2>
           </div>
-          <CompanyDirectory />
+          <CompanyDirectory refreshToken={directoryToken} />
         </section>
       </main>
       <Footer />
