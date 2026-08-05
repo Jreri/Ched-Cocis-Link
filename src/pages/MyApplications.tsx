@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Loader2, ChevronDown, ChevronRight, FileText, ExternalLink, ArrowRight } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
+import { useLiveData } from "@/hooks/useLiveData"
+
 
 type App = {
   id: string
@@ -21,7 +23,6 @@ type App = {
 
 export default function MyApplications() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
   const [rows, setRows] = useState<App[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
   const [q, setQ] = useState("")
@@ -29,19 +30,17 @@ export default function MyApplications() {
 
   useEffect(() => { document.title = "My applications — ChedLink" }, [])
 
-  useEffect(() => {
-    ;(async () => {
-      const { data: sess } = await supabase.auth.getSession()
-      if (!sess.session) { navigate("/login", { replace: true }); return }
-      const { data, error } = await supabase.from("applications")
-        .select("id, company_id, sent_to_email, created_at, documents, snapshot")
-        .eq("user_id", sess.session.user.id)
-        .order("created_at", { ascending: false })
-      if (error) toast.error(error.message)
-      setRows((data as App[]) || [])
-      setLoading(false)
-    })()
+  const { loading } = useLiveData(async () => {
+    const { data: sess } = await supabase.auth.getSession()
+    if (!sess.session) { navigate("/login", { replace: true }); return }
+    const { data, error } = await supabase.from("applications")
+      .select("id, company_id, sent_to_email, created_at, documents, snapshot")
+      .eq("user_id", sess.session.user.id)
+      .order("created_at", { ascending: false })
+    if (error) toast.error(error.message)
+    setRows((data as App[]) || [])
   }, [navigate])
+
 
   const toggle = async (a: App) => {
     if (expanded === a.id) { setExpanded(null); return }

@@ -39,7 +39,9 @@ const Placements = () => {
   const [viewingCity, setViewingCity] = useState<{ state: string; city: string } | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [verifying, setVerifying] = useState(false);
+  const [directoryToken, setDirectoryToken] = useState(0);
   const companiesRef = useRef<HTMLDivElement | null>(null);
+  const verifiedRefs = useRef<Set<string>>(new Set());
 
   const key = (s: string, c: string) => `${s}|${c}`;
 
@@ -48,6 +50,7 @@ const Placements = () => {
     const set = new Set<string>();
     (data as UnlockedCity[] | null)?.forEach((r) => set.add(key(r.state, r.city)));
     setUnlocked(set);
+    return set;
   }, []);
 
   const loadStates = useCallback(async () => {
@@ -74,34 +77,66 @@ const Placements = () => {
     return () => sub?.unsubscribe?.();
   }, [loadStates, loadUnlocked]);
 
-  // Verify payment on return
+  // Keep unlock state fresh when the tab regains focus (e.g. after paying in another tab)
+  useEffect(() => {
+    if (!authed) return;
+    const onFocus = () => { loadUnlocked(); };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [authed, loadUnlocked]);
+
+  // Verify payment on return from Paystack — retries transient failures automatically.
   useEffect(() => {
     const reference = searchParams.get("reference") || searchParams.get("trxref");
     if (!reference || !authed) return;
+    if (verifiedRefs.current.has(reference)) return;
+    verifiedRefs.current.add(reference);
+
+    // Strip the reference from the URL right away so a refresh can't re-trigger anything.
+    const next = new URLSearchParams(searchParams);
+    next.delete("reference");
+    next.delete("trxref");
+    setSearchParams(next, { replace: true });
+
     (async () => {
       setVerifying(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("paystack-verify", {
-          body: { reference },
-        });
-        if (error) throw error;
-        if (data?.success) {
-          toast.success(`Payment confirmed — ${data.city}, ${data.state} unlocked!`);
-          await loadUnlocked();
-          if (data.state && data.city) {
-            await openStateAndView(data.state, data.city);
+      let lastError = "";
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error } = await supabase.functions.invoke("paystack-verify", {
+            body: { reference },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+
+          if (data?.success) {
+            // Unlock instantly: update local state before any network round-trip finishes.
+            if (data.state && data.city) {
+              setUnlocked((prev) => new Set(prev).add(key(data.state, data.city)));
+            }
+            toast.success(`Payment confirmed — ${data.city}, ${data.state} unlocked!`);
+            await Promise.all([loadUnlocked(), loadStates()]);
+            setDirectoryToken((t) => t + 1);
+            if (data.state && data.city) {
+              await openStateAndView(data.state, data.city);
+            }
+            setVerifying(false);
+            return;
           }
-        } else {
-          toast.error("Payment was not completed");
+
+          // Paystack says the transaction isn't successful (yet) — brief retry, then report.
+          lastError = "Payment was not completed";
+        } catch (e: any) {
+          lastError = e?.message || "Verification failed";
         }
-      } catch (e: any) {
-        toast.error(e.message || "Verification failed");
-      } finally {
-        setVerifying(false);
-        searchParams.delete("reference");
-        searchParams.delete("trxref");
-        setSearchParams(searchParams, { replace: true });
+        await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
       }
+
+      // Final fallback: the webhook/verify may have landed anyway.
+      const set = await loadUnlocked();
+      if (set.size > 0) setDirectoryToken((t) => t + 1);
+      toast.error(`${lastError}. If you were charged, refresh in a moment — access is applied automatically.`);
+      setVerifying(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
@@ -151,19 +186,42 @@ const Placements = () => {
   }, [authed, searchParams]);
 
   const pay = async (state: string, city: string) => {
-    setPayingKey(key(state, city));
+    const k = key(state, city);
+    if (payingKey) return; // guard double clicks across all cards
+
+    // Never charge twice for the same location.
+    if (unlocked.has(k)) {
+      toast.info(`You already own access to ${city}, ${state} — opening it now.`);
+      await openStateAndView(state, city);
+      return;
+    }
+
+    setPayingKey(k);
     try {
+      // Re-check server-side in case another tab/session already paid.
+      const fresh = await loadUnlocked();
+      if (fresh.has(k)) {
+        toast.info(`You already own access to ${city}, ${state} — opening it now.`);
+        setDirectoryToken((t) => t + 1);
+        await openStateAndView(state, city);
+        return;
+      }
+
       const callback = `${window.location.origin}/placements`;
       const { data, error } = await supabase.functions.invoke("paystack-init", {
         body: { state, city, callback_url: callback },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       if (data?.already_paid) {
-        toast.info("You already have access to this location");
+        toast.info(`You already own access to ${city}, ${state} — opening it now.`);
         await loadUnlocked();
+        setDirectoryToken((t) => t + 1);
         await openStateAndView(state, city);
       } else if (data?.authorization_url) {
         window.location.href = data.authorization_url;
+        return; // keep the button disabled through the redirect
       } else {
         throw new Error("No authorization URL returned");
       }
@@ -173,6 +231,7 @@ const Placements = () => {
       setPayingKey(null);
     }
   };
+
 
   if (loading) {
     return (
@@ -342,7 +401,7 @@ const Placements = () => {
                           <Button
                             size="sm"
                             onClick={() => pay(selectedState, c.city)}
-                            disabled={payingKey === k}
+                            disabled={!!payingKey}
                           >
                             {payingKey === k ? (
                               <><Loader2 className="h-3 w-3 mr-2 animate-spin" /> Redirecting…</>
@@ -410,7 +469,7 @@ const Placements = () => {
             <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
             <h2 className="font-display text-2xl md:text-3xl text-ink">All eligible companies</h2>
           </div>
-          <CompanyDirectory />
+          <CompanyDirectory refreshToken={directoryToken} />
         </section>
       </main>
       <Footer />

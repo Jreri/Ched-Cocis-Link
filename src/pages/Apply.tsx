@@ -166,12 +166,14 @@ const Apply = () => {
           <h1 className="font-display text-4xl text-ink">Application sent</h1>
           <p className="text-muted-foreground mt-3 mb-8">
             We've emailed your application to <strong>{company.name}</strong> at {company.internship_email}.
-            You'll see it in your dashboard.
+            It's already recorded in My applications.
           </p>
+
           <div className="flex gap-3 justify-center">
             <Button asChild variant="outline"><Link to="/placements">Back to placements</Link></Button>
-            <Button asChild><Link to="/dashboard">View dashboard</Link></Button>
+            <Button asChild><Link to="/applications">View my applications</Link></Button>
           </div>
+
         </main>
         <Footer />
       </div>

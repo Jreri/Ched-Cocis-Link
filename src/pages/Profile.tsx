@@ -65,16 +65,27 @@ const Profile = () => {
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!uid) return
+    if (!uid || saving) return
     setSaving(true)
     const payload: any = { ...form }
     Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null })
-    const { error } = await supabase.from("profiles").update(payload).eq("id", uid)
+    const { data: saved, error } = await supabase
+      .from("profiles").update(payload).eq("id", uid).select().maybeSingle()
     await supabase.auth.updateUser({ data: { full_name: form.full_name, department_id: form.department_id, level: form.level, institution: form.institution } })
     setSaving(false)
     if (error) return toast.error(error.message)
+    // Reflect exactly what the backend stored, immediately.
+    if (saved) {
+      setForm((f: any) => {
+        const next: any = { ...f }
+        Object.keys(f).forEach(k => { next[k] = (saved as any)[k] ?? "" })
+        return next
+      })
+      setDocuments(((saved as any).documents as Record<string, string>) || {})
+    }
     toast.success("Profile updated")
   }
+
 
   const upload = async (key: string, file: File) => {
     setUploadingKey(key)
