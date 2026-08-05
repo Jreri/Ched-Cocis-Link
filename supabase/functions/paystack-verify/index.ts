@@ -6,6 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+/** Paystack occasionally answers with an HTML error page (bad key, 5xx, WAF).
+ *  Never blindly .json() — read text and parse defensively. */
+async function paystackGet(url: string, secret: string) {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${secret}`, Accept: 'application/json' },
+  });
+  const text = await res.text();
+  let body: any = null;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    console.error('Paystack non-JSON response', res.status, text.slice(0, 300));
+    return { ok: false, status: res.status, body: null as any };
+  }
+  return { ok: res.ok, status: res.status, body };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -30,17 +47,42 @@ Deno.serve(async (req) => {
     const secret = Deno.env.get('PAYSTACK_SECRET_KEY');
     if (!secret) return json({ error: 'Payment provider not configured' }, 500);
 
-    const vRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
-      headers: { Authorization: `Bearer ${secret}` },
-    });
-    const vJson = await vRes.json();
-    if (!vRes.ok || !vJson.status) {
-      return json({ error: vJson.message || 'Verification failed' }, 502);
+    const admin = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Already recorded for this reference? Idempotent success — never charge twice.
+    const { data: byRef } = await admin
+      .from('placement_access')
+      .select('state, city')
+      .eq('user_id', userId)
+      .eq('paystack_reference', reference)
+      .maybeSingle();
+    if (byRef) {
+      return json({ success: true, state: byRef.state, city: byRef.city, already_recorded: true });
     }
 
-    const data = vJson.data;
-    if (data.status !== 'success') {
-      return json({ success: false, status: data.status });
+    // Verify with Paystack, retrying transient/non-JSON failures.
+    const url = `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`;
+    let attempt = 0;
+    let result = await paystackGet(url, secret);
+    while (!result.body && attempt < 2) {
+      attempt++;
+      await new Promise((r) => setTimeout(r, 600 * attempt));
+      result = await paystackGet(url, secret);
+    }
+
+    if (!result.body) {
+      return json({ error: 'Could not reach the payment provider. Please try again in a moment.' }, 502);
+    }
+    if (!result.ok || !result.body.status) {
+      return json({ error: result.body.message || 'Verification failed' }, 502);
+    }
+
+    const data = result.body.data;
+    if (data?.status !== 'success') {
+      return json({ success: false, status: data?.status ?? 'unknown' });
     }
 
     const meta = data.metadata || {};
@@ -53,12 +95,7 @@ Deno.serve(async (req) => {
 
     const amountNaira = Math.floor((data.amount ?? 0) / 100);
 
-    // Idempotent insert via service role (placement_access has no insert policy).
-    const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
-
+    // Idempotent upsert via service role (placement_access has no insert policy).
     const { data: existing } = await admin
       .from('placement_access')
       .select('id')
@@ -76,8 +113,18 @@ Deno.serve(async (req) => {
         paystack_reference: reference,
       });
       if (insertErr) {
-        console.error('insert placement_access failed', insertErr);
-        return json({ error: 'Could not record access' }, 500);
+        // A concurrent verify may have won the race — treat an existing row as success.
+        const { data: recheck } = await admin
+          .from('placement_access')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('state', state)
+          .eq('city', city)
+          .maybeSingle();
+        if (!recheck) {
+          console.error('insert placement_access failed', insertErr);
+          return json({ error: 'Could not record access' }, 500);
+        }
       }
     }
 
