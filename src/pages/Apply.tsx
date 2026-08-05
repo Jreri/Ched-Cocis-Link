@@ -170,8 +170,9 @@ const Apply = () => {
           </p>
           <div className="flex gap-3 justify-center">
             <Button asChild variant="outline"><Link to="/placements">Back to placements</Link></Button>
-            <Button asChild><Link to="/dashboard">View dashboard</Link></Button>
+            <Button asChild><Link to="/applications">View my applications</Link></Button>
           </div>
+
         </main>
         <Footer />
       </div>
