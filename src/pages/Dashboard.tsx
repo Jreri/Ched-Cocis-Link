@@ -32,58 +32,55 @@ type Application = {
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState<string>("")
   const [profile, setProfile] = useState<Profile | null>(null)
   const [departmentName, setDepartmentName] = useState<string>("")
   const [unlocked, setUnlocked] = useState<Unlocked[]>([])
+  const [applications, setApplications] = useState<Application[]>([])
 
   useEffect(() => {
     document.title = "Dashboard — ChedLink"
   }, [])
 
-  const [applications, setApplications] = useState<Application[]>([])
+  const { loading } = useLiveData(async () => {
+    const { data: sess } = await supabase.auth.getSession()
+    if (!sess.session) {
+      navigate("/login", { replace: true })
+      return
+    }
+    const user = sess.session.user
+    setEmail(user.email || "")
+    const meta = (user.user_metadata || {}) as Record<string, string | null>
 
-  useEffect(() => {
-    ;(async () => {
-      const { data: sess } = await supabase.auth.getSession()
-      if (!sess.session) {
-        navigate("/login", { replace: true })
-        return
-      }
-      const user = sess.session.user
-      setEmail(user.email || "")
-      const meta = (user.user_metadata || {}) as Record<string, string | null>
+    const uid = user.id
+    const [{ data: prof }, { data: locs }, { data: apps }] = await Promise.all([
+      supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
+      supabase.rpc("get_my_unlocked_locations"),
+      supabase.from("applications").select("id, company_id, status, sent_to_email, created_at, snapshot").eq("user_id", uid).order("created_at", { ascending: false }).limit(10),
+    ])
 
-      const uid = user.id
-      const [{ data: prof }, { data: locs }, { data: apps }] = await Promise.all([
-        supabase.from("profiles").select("full_name, department_id, level, institution, phone").eq("id", uid).maybeSingle(),
-        supabase.rpc("get_my_unlocked_locations"),
-        supabase.from("applications").select("id, company_id, status, sent_to_email, created_at, snapshot").eq("user_id", uid).order("created_at", { ascending: false }).limit(10),
-      ])
+    // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
+    const merged: Profile = {
+      full_name: prof?.full_name ?? meta.full_name ?? null,
+      department_id: prof?.department_id ?? (meta.department_id as string) ?? null,
+      level: prof?.level ?? meta.level ?? null,
+      institution: prof?.institution ?? meta.institution ?? null,
+      phone: prof?.phone ?? meta.phone ?? null,
+    }
+    setProfile(merged)
+    setUnlocked((locs as Unlocked[]) || [])
+    setApplications((apps as Application[]) || [])
 
-      // Merge DB profile with auth metadata so nothing appears "unset" if the value exists
-      const merged: Profile = {
-        full_name: prof?.full_name ?? meta.full_name ?? null,
-        department_id: prof?.department_id ?? (meta.department_id as string) ?? null,
-        level: prof?.level ?? meta.level ?? null,
-        institution: prof?.institution ?? meta.institution ?? null,
-        phone: prof?.phone ?? meta.phone ?? null,
-      }
-      setProfile(merged)
-      setUnlocked((locs as Unlocked[]) || [])
-      setApplications((apps as Application[]) || [])
-
-      if (merged.department_id) {
-        const { data: dept } = await supabase
-          .from("departments")
-          .select("name")
-          .eq("id", merged.department_id)
-          .maybeSingle()
-        setDepartmentName(dept?.name || "")
-      }
-      setLoading(false)
-    })()
+    if (merged.department_id) {
+      const { data: dept } = await supabase
+        .from("departments")
+        .select("name")
+        .eq("id", merged.department_id)
+        .maybeSingle()
+      setDepartmentName(dept?.name || "")
+    } else {
+      setDepartmentName("")
+    }
   }, [navigate])
 
   const signOut = async () => {
@@ -91,6 +88,7 @@ const Dashboard = () => {
     toast.success("Signed out")
     navigate("/", { replace: true })
   }
+
 
   if (loading) {
     return (
