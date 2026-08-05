@@ -97,7 +97,7 @@ const Footer = () => {
 
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-primary-foreground/50">
           <div>
-            © {new Date().getFullYear()} <SecretAdminMark /> · Developed by Ched Dev in collaboration with COCIS.
+            © {new Date().getFullYear()} <SecretAdminMark /> · Developed by Ched Technology in collaboration with COCIS.
           </div>
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-primary-foreground">Privacy</Link>
