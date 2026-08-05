@@ -121,7 +121,10 @@ const Dashboard = () => {
               <Button asChild variant="outline" size="sm" className="rounded-full">
                 <Link to="/profile">Edit profile</Link>
               </Button>
-              <Button variant="ghost" size="sm" onClick={signOut}>Sign out</Button>
+              <Button asChild variant="ghost" size="sm" className="rounded-full">
+                <Link to="/applications">My applications</Link>
+              </Button>
+
             </div>
           </div>
           <div className="h-px bg-ink/10 mt-10" />
