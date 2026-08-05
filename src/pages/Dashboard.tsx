@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, MapPin, User, Unlock, ArrowRight, FileText } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
-import { toast } from "sonner"
+import { useLiveData } from "@/hooks/useLiveData"
 import { useLiveData } from "@/hooks/useLiveData"
 
 
@@ -83,11 +83,6 @@ const Dashboard = () => {
     }
   }, [navigate])
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    toast.success("Signed out")
-    navigate("/", { replace: true })
-  }
 
 
   if (loading) {
