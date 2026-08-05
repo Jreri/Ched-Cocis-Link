@@ -28,12 +28,15 @@ export default function CompanyDirectory({
   viewAllTo,
   title = "All companies",
   subtitle = "Every placement open to your department. Unlock a city to see contact details and apply.",
+  refreshToken = 0,
 }: {
   limit?: number
   showSearch?: boolean
   viewAllTo?: string
   title?: string
   subtitle?: string
+  /** Bump this after a mutation (e.g. a successful unlock) to refetch immediately. */
+  refreshToken?: number
 }) {
   const [rows, setRows] = useState<Row[]>([])
   const [reqs, setReqs] = useState<Record<string, CompanyRequirementRow[]>>({})
@@ -41,11 +44,13 @@ export default function CompanyDirectory({
   const [q, setQ] = useState("")
 
   useEffect(() => {
+    let active = true
     ;(async () => {
       const [{ data }, { data: r }] = await Promise.all([
         supabase.rpc("browse_companies"),
         supabase.from("company_requirements").select("company_id, field_key, kind, label, requirement, sort_order"),
       ])
+      if (!active) return
       setRows((data as Row[]) || [])
       const map: Record<string, CompanyRequirementRow[]> = {}
       ;(r || []).forEach((row: any) => {
@@ -54,7 +59,9 @@ export default function CompanyDirectory({
       setReqs(map)
       setLoading(false)
     })()
-  }, [])
+    return () => { active = false }
+  }, [refreshToken])
+
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase()
