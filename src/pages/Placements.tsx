@@ -41,8 +41,11 @@ const Placements = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [verifying, setVerifying] = useState(false);
   const [directoryToken, setDirectoryToken] = useState(0);
+  const [citySearch, setCitySearch] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
   const companiesRef = useRef<HTMLDivElement | null>(null);
   const verifiedRefs = useRef<Set<string>>(new Set());
+
 
   const key = (s: string, c: string) => `${s}|${c}`;
 
