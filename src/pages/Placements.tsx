@@ -503,9 +503,14 @@ const Placements = () => {
         <section className="mt-16">
           <div className="mb-6">
             <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
-            <h2 className="font-display text-2xl md:text-3xl text-ink">All eligible companies</h2>
+            <h2 className="font-display text-2xl md:text-3xl text-ink">Your unlocked companies</h2>
           </div>
-          <CompanyDirectory refreshToken={directoryToken} />
+          <CompanyDirectory
+            refreshToken={directoryToken}
+            onlyUnlocked
+            title="Unlocked companies"
+            subtitle="Search every company you've unlocked, matched to your department."
+          />
         </section>
       </main>
       <Footer />
