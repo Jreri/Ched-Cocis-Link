@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Save, Upload, CheckCircle2, Trash2 } from "lucide-react"
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Loader2, Save, Upload, CheckCircle2, Trash2, Lock } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { CANONICAL_FIELDS } from "@/lib/applicationFields"
@@ -26,6 +30,8 @@ const Profile = () => {
   const [email, setEmail] = useState("")
   const [departments, setDepartments] = useState<Department[]>([])
   const [documents, setDocuments] = useState<Record<string, string>>({})
+  const [locked, setLocked] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [form, setForm] = useState({
     full_name: "", department_id: "", level: "", institution: "", phone: "",
     address: "", date_of_birth: "", matric_number: "", university: "",
@@ -58,17 +64,25 @@ const Profile = () => {
           expected_end_date: p.expected_end_date ?? "",
         })
         setDocuments((p.documents as Record<string, string>) || {})
+        setLocked(!!p.profile_locked)
       }
       setLoading(false)
     })()
   }, [navigate])
 
-  const save = async (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!uid || saving) return
+    if (locked) { doSave() } else { setConfirmOpen(true) }
+  }
+
+  const doSave = async () => {
+    setConfirmOpen(false)
     if (!uid || saving) return
     setSaving(true)
     const payload: any = { ...form }
     Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null })
+    if (!locked) payload.profile_locked = true
     const { data: saved, error } = await supabase
       .from("profiles").update(payload).eq("id", uid).select().maybeSingle()
     await supabase.auth.updateUser({ data: { full_name: form.full_name, department_id: form.department_id, level: form.level, institution: form.institution } })
@@ -82,9 +96,11 @@ const Profile = () => {
         return next
       })
       setDocuments(((saved as any).documents as Record<string, string>) || {})
+      setLocked(!!(saved as any).profile_locked)
     }
-    toast.success("Profile updated")
+    toast.success(locked ? "Profile updated" : "Profile saved — personal and academic details are now locked")
   }
+
 
 
   const upload = async (key: string, file: File) => {
@@ -133,37 +149,46 @@ const Profile = () => {
           <p className="text-muted-foreground mt-1">Fill this once — every application auto-fills from here.</p>
         </div>
 
-        <form onSubmit={save} className="space-y-6">
+        <div className={`mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm ${locked ? "bg-muted/50" : "border-primary/40 bg-primary/5"}`}>
+          <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+          <p className="text-muted-foreground">
+            {locked
+              ? "Your personal and academic details are locked. Contact an administrator if something needs to change."
+              : "You can update your personal and academic details only once. After you save, these fields are permanently locked."}
+          </p>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-6">
           <Card>
             <CardHeader><CardTitle>Personal information</CardTitle></CardHeader>
             <CardContent className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Email</Label><Input value={email} disabled /></div>
-              <F label="Full name" v={form.full_name} on={v => setForm(s => ({ ...s, full_name: v }))} />
-              <F label="Phone" v={form.phone} on={v => setForm(s => ({ ...s, phone: v }))} />
-              <F label="Date of birth" type="date" v={form.date_of_birth} on={v => setForm(s => ({ ...s, date_of_birth: v }))} />
-              <div className="sm:col-span-2"><F label="Residential address" v={form.address} on={v => setForm(s => ({ ...s, address: v }))} textarea /></div>
+              <F label="Full name" disabled={locked} v={form.full_name} on={v => setForm(s => ({ ...s, full_name: v }))} />
+              <F label="Phone" disabled={locked} v={form.phone} on={v => setForm(s => ({ ...s, phone: v }))} />
+              <F label="Date of birth" disabled={locked} type="date" v={form.date_of_birth} on={v => setForm(s => ({ ...s, date_of_birth: v }))} />
+              <div className="sm:col-span-2"><F label="Residential address" disabled={locked} v={form.address} on={v => setForm(s => ({ ...s, address: v }))} textarea /></div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader><CardTitle>Academic information</CardTitle></CardHeader>
             <CardContent className="grid sm:grid-cols-2 gap-4">
-              <F label="University" v={form.university || form.institution} on={v => setForm(s => ({ ...s, university: v, institution: v }))} />
+              <F label="University" disabled={locked} v={form.university || form.institution} on={v => setForm(s => ({ ...s, university: v, institution: v }))} />
               <div className="space-y-2">
                 <Label>Department</Label>
-                <Select value={form.department_id} onValueChange={v => setForm(s => ({ ...s, department_id: v }))}>
+                <Select value={form.department_id} disabled={locked} onValueChange={v => setForm(s => ({ ...s, department_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                   <SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Level</Label>
-                <Select value={form.level} onValueChange={v => setForm(s => ({ ...s, level: v }))}>
+                <Select value={form.level} disabled={locked} onValueChange={v => setForm(s => ({ ...s, level: v }))}>
                   <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
                   <SelectContent>{LEVELS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <F label="Matriculation number" v={form.matric_number} on={v => setForm(s => ({ ...s, matric_number: v }))} />
+              <F label="Matriculation number" disabled={locked} v={form.matric_number} on={v => setForm(s => ({ ...s, matric_number: v }))} />
             </CardContent>
           </Card>
 
@@ -182,6 +207,7 @@ const Profile = () => {
               Save changes
             </Button>
           </div>
+
         </form>
 
         <Card className="mt-6">
@@ -222,19 +248,37 @@ const Profile = () => {
         </Card>
       </main>
       <Footer />
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This is your only chance to edit these details</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your full name, phone number, date of birth, address, university, department, level
+              and matriculation number will be permanently locked once you save. Only an
+              administrator can change them afterwards. Please double-check everything.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review again</AlertDialogCancel>
+            <AlertDialogAction onClick={doSave}>Save and lock</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
 
-function F({ label, v, on, type = "text", textarea = false, placeholder }: { label: string; v: string; on: (v: string) => void; type?: string; textarea?: boolean; placeholder?: string }) {
+function F({ label, v, on, type = "text", textarea = false, placeholder, disabled = false }: { label: string; v: string; on: (v: string) => void; type?: string; textarea?: boolean; placeholder?: string; disabled?: boolean }) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       {textarea
-        ? <Textarea rows={2} value={v} placeholder={placeholder} onChange={e => on(e.target.value)} />
-        : <Input type={type} value={v} placeholder={placeholder} onChange={e => on(e.target.value)} />}
+        ? <Textarea rows={2} value={v} disabled={disabled} placeholder={placeholder} onChange={e => on(e.target.value)} />
+        : <Input type={type} value={v} disabled={disabled} placeholder={placeholder} onChange={e => on(e.target.value)} />}
     </div>
   )
 }
+
 
 export default Profile

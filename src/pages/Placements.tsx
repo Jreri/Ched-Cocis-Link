@@ -6,7 +6,8 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Lock, Unlock, Loader2, Building, Mail, Phone } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { MapPin, Lock, Unlock, Loader2, Building, Mail, Phone, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -40,8 +41,11 @@ const Placements = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [verifying, setVerifying] = useState(false);
   const [directoryToken, setDirectoryToken] = useState(0);
+  const [citySearch, setCitySearch] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
   const companiesRef = useRef<HTMLDivElement | null>(null);
   const verifiedRefs = useRef<Set<string>>(new Set());
+
 
   const key = (s: string, c: string) => `${s}|${c}`;
 
@@ -153,6 +157,8 @@ const Placements = () => {
   const viewCompanies = async (state: string, city: string) => {
     setViewingCity({ state, city });
     setCompanies([]);
+    setCompanySearch("");
+
     const { data, error } = await supabase.rpc("get_unlocked_companies", {
       _state: state,
       _city: city,
@@ -232,6 +238,15 @@ const Placements = () => {
     }
   };
 
+  const cs = citySearch.trim().toLowerCase();
+  const visibleCities = cs ? cities.filter(c => c.city.toLowerCase().includes(cs)) : cities;
+  const qs = companySearch.trim().toLowerCase();
+  const visibleCompanies = qs
+    ? companies.filter(c =>
+        `${c.name} ${c.city ?? ""} ${c.business_district ?? ""} ${c.address}`.toLowerCase().includes(qs),
+      )
+    : companies;
+
 
   if (loading) {
     return (
@@ -270,8 +285,8 @@ const Placements = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-display text-ink mb-3">Find your placement</h1>
           <p className="text-muted-foreground max-w-2xl">
-            Pick a state and a city relevant to your department. Unlock a city for ₦3,000 to
-            reveal every company's full details.
+            Every count below shows only companies accepting students from your department.
+            Unlock a city for ₦3,000 to reveal full details and search by company name or area.
           </p>
         </div>
 
@@ -355,13 +370,22 @@ const Placements = () => {
 
             {selectedState && (
               <Card>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 gap-3">
                   <CardTitle className="text-lg font-display">
                     Cities in <span className="text-primary">{selectedState}</span>
                   </CardTitle>
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={citySearch}
+                      onChange={(e) => setCitySearch(e.target.value)}
+                      placeholder="Search a city or area — Ikeja, Lekki, Yaba…"
+                      className="pl-9"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-3">
-                  {cities.map((c) => {
+                  {visibleCities.map((c) => {
                     const isUnlocked = unlocked.has(key(selectedState, c.city));
                     const isViewing = viewingCity?.state === selectedState && viewingCity?.city === c.city;
                     const k = key(selectedState, c.city);
@@ -413,9 +437,11 @@ const Placements = () => {
                       </div>
                     );
                   })}
-                  {cities.length === 0 && (
+                  {visibleCities.length === 0 && (
                     <p className="text-sm text-muted-foreground col-span-full py-6 text-center">
-                      No cities available for your department here.
+                      {cities.length === 0
+                        ? "No cities available for your department here."
+                        : `No city matches “${citySearch}”.`}
                     </p>
                   )}
                 </CardContent>
@@ -424,17 +450,29 @@ const Placements = () => {
 
             {viewingCity && (
               <Card ref={companiesRef} className="ring-2 ring-primary/30 scroll-mt-28">
-                <CardHeader>
+                <CardHeader className="gap-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Building className="h-5 w-5" />
                     Companies — {viewingCity.city}, {viewingCity.state}
                   </CardTitle>
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={companySearch}
+                      onChange={(e) => setCompanySearch(e.target.value)}
+                      placeholder="Search company name or area…"
+                      className="pl-9"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {companies.length === 0 && (
                     <p className="text-sm text-muted-foreground">Loading companies…</p>
                   )}
-                  {companies.map((co) => (
+                  {companies.length > 0 && visibleCompanies.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No company matches “{companySearch}”.</p>
+                  )}
+                  {visibleCompanies.map((co) => (
                     <div key={co.id} className="p-4 rounded-lg border bg-card">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -467,9 +505,14 @@ const Placements = () => {
         <section className="mt-16">
           <div className="mb-6">
             <div className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground mb-1">Directory</div>
-            <h2 className="font-display text-2xl md:text-3xl text-ink">All eligible companies</h2>
+            <h2 className="font-display text-2xl md:text-3xl text-ink">Your unlocked companies</h2>
           </div>
-          <CompanyDirectory refreshToken={directoryToken} />
+          <CompanyDirectory
+            refreshToken={directoryToken}
+            onlyUnlocked
+            title="Unlocked companies"
+            subtitle="Search every company you've unlocked, matched to your department."
+          />
         </section>
       </main>
       <Footer />

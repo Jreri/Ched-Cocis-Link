@@ -29,6 +29,7 @@ export default function CompanyDirectory({
   title = "All companies",
   subtitle = "Every placement open to your department. Unlock a city to see contact details and apply.",
   refreshToken = 0,
+  onlyUnlocked = false,
 }: {
   limit?: number
   showSearch?: boolean
@@ -37,11 +38,14 @@ export default function CompanyDirectory({
   subtitle?: string
   /** Bump this after a mutation (e.g. a successful unlock) to refetch immediately. */
   refreshToken?: number
+  /** Only list companies in locations the student has already paid to unlock. */
+  onlyUnlocked?: boolean
 }) {
   const [rows, setRows] = useState<Row[]>([])
   const [reqs, setReqs] = useState<Record<string, CompanyRequirementRow[]>>({})
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+
 
   useEffect(() => {
     let active = true
@@ -51,7 +55,9 @@ export default function CompanyDirectory({
         supabase.from("company_requirements").select("company_id, field_key, kind, label, requirement, sort_order"),
       ])
       if (!active) return
-      setRows((data as Row[]) || [])
+      const all = (data as Row[]) || []
+      setRows(onlyUnlocked ? all.filter(c => c.is_unlocked) : all)
+
       const map: Record<string, CompanyRequirementRow[]> = {}
       ;(r || []).forEach((row: any) => {
         map[row.company_id] = [...(map[row.company_id] || []), row as CompanyRequirementRow]
@@ -60,7 +66,7 @@ export default function CompanyDirectory({
       setLoading(false)
     })()
     return () => { active = false }
-  }, [refreshToken])
+  }, [refreshToken, onlyUnlocked])
 
 
   const filtered = useMemo(() => {
@@ -96,7 +102,9 @@ export default function CompanyDirectory({
         )}
         {!loading && filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No companies found. Make sure your profile has a department set.
+            {onlyUnlocked
+              ? "You haven't unlocked any location yet. Unlock a city above to browse and search its companies."
+              : "No companies found for your department yet. Make sure your profile has a department set."}
           </p>
         )}
         {filtered.map(c => (

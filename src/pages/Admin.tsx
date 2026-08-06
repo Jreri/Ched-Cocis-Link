@@ -428,13 +428,26 @@ export default function Admin() {
         const deptField = (r.departments || r.department || "").trim()
         let deptIds: string[] = []
         if (deptField) {
-          deptIds = deptField.split(/[,;|]/).map(s => s.trim().toLowerCase()).filter(Boolean)
-            .map(k => deptByName.get(k) || deptBySlug.get(k)).filter(Boolean) as string[]
+          const names = deptField.split(/[,;|]/).map(s => s.trim()).filter(Boolean)
+          for (const n of names) {
+            const k = n.toLowerCase()
+            let id = deptByName.get(k) || deptBySlug.get(k)
+            if (!id) {
+              // Unknown department in the CSV — create it so the company stays reachable.
+              const slug = k.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+              const { data: newDept } = await supabase
+                .from("departments").insert({ name: n, slug }).select("id").single()
+              if (!newDept) {
+                const { data: existingDept } = await supabase
+                  .from("departments").select("id").eq("slug", slug).maybeSingle()
+                id = existingDept?.id
+              } else id = newDept.id
+              if (id) { deptByName.set(k, id); deptBySlug.set(slug, id) }
+            }
+            if (id) deptIds.push(id)
+          }
         }
-        if (!deptIds.length) {
-          // default to Computer Science / Cyber Security so admin sees them
-          deptIds = departments.filter(d => ["computer-science","cyber-security","software-engineering","information-technology"].includes(d.slug)).map(d => d.id)
-        }
+
         if (deptIds.length) {
           await supabase.from("company_departments").insert(deptIds.map(did => ({ company_id: ins.id, department_id: did })))
         }
@@ -562,8 +575,11 @@ export default function Admin() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <p className="text-sm text-muted-foreground">
-                CSV imports match these names case-insensitively and create new entries automatically when a requirement doesn't exist yet.
+                CSV columns: <code className="text-xs">Company Name, Company Address, State, City, HR Email, Requirements, Department</code>.
+                Requirements match the names below case-insensitively and new ones are created automatically;
+                unknown departments are created too. The Department column controls which students can see and apply to the company.
               </p>
+
               <div className="flex flex-wrap gap-2">
                 {CANONICAL_FIELDS.filter(f => f.kind === "document").map(f => (
                   <Badge key={f.key} variant="secondary" className="font-normal">{f.label}</Badge>
