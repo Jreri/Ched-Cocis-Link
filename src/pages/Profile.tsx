@@ -149,37 +149,46 @@ const Profile = () => {
           <p className="text-muted-foreground mt-1">Fill this once — every application auto-fills from here.</p>
         </div>
 
-        <form onSubmit={save} className="space-y-6">
+        <div className={`mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm ${locked ? "bg-muted/50" : "border-primary/40 bg-primary/5"}`}>
+          <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+          <p className="text-muted-foreground">
+            {locked
+              ? "Your personal and academic details are locked. Contact an administrator if something needs to change."
+              : "You can update your personal and academic details only once. After you save, these fields are permanently locked."}
+          </p>
+        </div>
+
+        <form onSubmit={onSubmit} className="space-y-6">
           <Card>
             <CardHeader><CardTitle>Personal information</CardTitle></CardHeader>
             <CardContent className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-2"><Label>Email</Label><Input value={email} disabled /></div>
-              <F label="Full name" v={form.full_name} on={v => setForm(s => ({ ...s, full_name: v }))} />
-              <F label="Phone" v={form.phone} on={v => setForm(s => ({ ...s, phone: v }))} />
-              <F label="Date of birth" type="date" v={form.date_of_birth} on={v => setForm(s => ({ ...s, date_of_birth: v }))} />
-              <div className="sm:col-span-2"><F label="Residential address" v={form.address} on={v => setForm(s => ({ ...s, address: v }))} textarea /></div>
+              <F label="Full name" disabled={locked} v={form.full_name} on={v => setForm(s => ({ ...s, full_name: v }))} />
+              <F label="Phone" disabled={locked} v={form.phone} on={v => setForm(s => ({ ...s, phone: v }))} />
+              <F label="Date of birth" disabled={locked} type="date" v={form.date_of_birth} on={v => setForm(s => ({ ...s, date_of_birth: v }))} />
+              <div className="sm:col-span-2"><F label="Residential address" disabled={locked} v={form.address} on={v => setForm(s => ({ ...s, address: v }))} textarea /></div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader><CardTitle>Academic information</CardTitle></CardHeader>
             <CardContent className="grid sm:grid-cols-2 gap-4">
-              <F label="University" v={form.university || form.institution} on={v => setForm(s => ({ ...s, university: v, institution: v }))} />
+              <F label="University" disabled={locked} v={form.university || form.institution} on={v => setForm(s => ({ ...s, university: v, institution: v }))} />
               <div className="space-y-2">
                 <Label>Department</Label>
-                <Select value={form.department_id} onValueChange={v => setForm(s => ({ ...s, department_id: v }))}>
+                <Select value={form.department_id} disabled={locked} onValueChange={v => setForm(s => ({ ...s, department_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                   <SelectContent>{departments.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Level</Label>
-                <Select value={form.level} onValueChange={v => setForm(s => ({ ...s, level: v }))}>
+                <Select value={form.level} disabled={locked} onValueChange={v => setForm(s => ({ ...s, level: v }))}>
                   <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
                   <SelectContent>{LEVELS.map(l => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <F label="Matriculation number" v={form.matric_number} on={v => setForm(s => ({ ...s, matric_number: v }))} />
+              <F label="Matriculation number" disabled={locked} v={form.matric_number} on={v => setForm(s => ({ ...s, matric_number: v }))} />
             </CardContent>
           </Card>
 
@@ -198,6 +207,7 @@ const Profile = () => {
               Save changes
             </Button>
           </div>
+
         </form>
 
         <Card className="mt-6">
