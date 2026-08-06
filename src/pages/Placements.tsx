@@ -285,8 +285,8 @@ const Placements = () => {
           </div>
           <h1 className="text-4xl md:text-5xl font-display text-ink mb-3">Find your placement</h1>
           <p className="text-muted-foreground max-w-2xl">
-            Pick a state and a city relevant to your department. Unlock a city for ₦3,000 to
-            reveal every company's full details.
+            Every count below shows only companies accepting students from your department.
+            Unlock a city for ₦3,000 to reveal full details and search by company name or area.
           </p>
         </div>
 
