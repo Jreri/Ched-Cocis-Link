@@ -248,19 +248,37 @@ const Profile = () => {
         </Card>
       </main>
       <Footer />
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>This is your only chance to edit these details</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your full name, phone number, date of birth, address, university, department, level
+              and matriculation number will be permanently locked once you save. Only an
+              administrator can change them afterwards. Please double-check everything.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Review again</AlertDialogCancel>
+            <AlertDialogAction onClick={doSave}>Save and lock</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
 
-function F({ label, v, on, type = "text", textarea = false, placeholder }: { label: string; v: string; on: (v: string) => void; type?: string; textarea?: boolean; placeholder?: string }) {
+function F({ label, v, on, type = "text", textarea = false, placeholder, disabled = false }: { label: string; v: string; on: (v: string) => void; type?: string; textarea?: boolean; placeholder?: string; disabled?: boolean }) {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       {textarea
-        ? <Textarea rows={2} value={v} placeholder={placeholder} onChange={e => on(e.target.value)} />
-        : <Input type={type} value={v} placeholder={placeholder} onChange={e => on(e.target.value)} />}
+        ? <Textarea rows={2} value={v} disabled={disabled} placeholder={placeholder} onChange={e => on(e.target.value)} />
+        : <Input type={type} value={v} disabled={disabled} placeholder={placeholder} onChange={e => on(e.target.value)} />}
     </div>
   )
 }
+
 
 export default Profile
