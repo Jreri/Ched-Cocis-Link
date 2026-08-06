@@ -29,6 +29,7 @@ export default function CompanyDirectory({
   title = "All companies",
   subtitle = "Every placement open to your department. Unlock a city to see contact details and apply.",
   refreshToken = 0,
+  onlyUnlocked = false,
 }: {
   limit?: number
   showSearch?: boolean
@@ -37,11 +38,14 @@ export default function CompanyDirectory({
   subtitle?: string
   /** Bump this after a mutation (e.g. a successful unlock) to refetch immediately. */
   refreshToken?: number
+  /** Only list companies in locations the student has already paid to unlock. */
+  onlyUnlocked?: boolean
 }) {
   const [rows, setRows] = useState<Row[]>([])
   const [reqs, setReqs] = useState<Record<string, CompanyRequirementRow[]>>({})
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
+
 
   useEffect(() => {
     let active = true
