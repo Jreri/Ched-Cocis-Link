@@ -575,8 +575,11 @@ export default function Admin() {
           <Card>
             <CardContent className="pt-6 space-y-4">
               <p className="text-sm text-muted-foreground">
-                CSV imports match these names case-insensitively and create new entries automatically when a requirement doesn't exist yet.
+                CSV columns: <code className="text-xs">Company Name, Company Address, State, City, HR Email, Requirements, Department</code>.
+                Requirements match the names below case-insensitively and new ones are created automatically;
+                unknown departments are created too. The Department column controls which students can see and apply to the company.
               </p>
+
               <div className="flex flex-wrap gap-2">
                 {CANONICAL_FIELDS.filter(f => f.kind === "document").map(f => (
                   <Badge key={f.key} variant="secondary" className="font-normal">{f.label}</Badge>
