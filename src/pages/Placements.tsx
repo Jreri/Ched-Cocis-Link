@@ -435,9 +435,11 @@ const Placements = () => {
                       </div>
                     );
                   })}
-                  {cities.length === 0 && (
+                  {visibleCities.length === 0 && (
                     <p className="text-sm text-muted-foreground col-span-full py-6 text-center">
-                      No cities available for your department here.
+                      {cities.length === 0
+                        ? "No cities available for your department here."
+                        : `No city matches “${citySearch}”.`}
                     </p>
                   )}
                 </CardContent>
@@ -446,17 +448,29 @@ const Placements = () => {
 
             {viewingCity && (
               <Card ref={companiesRef} className="ring-2 ring-primary/30 scroll-mt-28">
-                <CardHeader>
+                <CardHeader className="gap-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Building className="h-5 w-5" />
                     Companies — {viewingCity.city}, {viewingCity.state}
                   </CardTitle>
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={companySearch}
+                      onChange={(e) => setCompanySearch(e.target.value)}
+                      placeholder="Search company name or area…"
+                      className="pl-9"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {companies.length === 0 && (
                     <p className="text-sm text-muted-foreground">Loading companies…</p>
                   )}
-                  {companies.map((co) => (
+                  {companies.length > 0 && visibleCompanies.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No company matches “{companySearch}”.</p>
+                  )}
+                  {visibleCompanies.map((co) => (
                     <div key={co.id} className="p-4 rounded-lg border bg-card">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
