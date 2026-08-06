@@ -263,6 +263,7 @@ export type Database = {
           matric_number: string | null
           phone: string | null
           preferred_start_date: string | null
+          profile_locked: boolean
           university: string | null
           updated_at: string
         }
@@ -282,6 +283,7 @@ export type Database = {
           matric_number?: string | null
           phone?: string | null
           preferred_start_date?: string | null
+          profile_locked?: boolean
           university?: string | null
           updated_at?: string
         }
@@ -301,6 +303,7 @@ export type Database = {
           matric_number?: string | null
           phone?: string | null
           preferred_start_date?: string | null
+          profile_locked?: boolean
           university?: string | null
           updated_at?: string
         }
