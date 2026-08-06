@@ -66,7 +66,7 @@ export default function CompanyDirectory({
       setLoading(false)
     })()
     return () => { active = false }
-  }, [refreshToken])
+  }, [refreshToken, onlyUnlocked])
 
 
   const filtered = useMemo(() => {
