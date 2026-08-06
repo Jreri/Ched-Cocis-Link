@@ -236,6 +236,15 @@ const Placements = () => {
     }
   };
 
+  const cs = citySearch.trim().toLowerCase();
+  const visibleCities = cs ? cities.filter(c => c.city.toLowerCase().includes(cs)) : cities;
+  const qs = companySearch.trim().toLowerCase();
+  const visibleCompanies = qs
+    ? companies.filter(c =>
+        `${c.name} ${c.city ?? ""} ${c.business_district ?? ""} ${c.address}`.toLowerCase().includes(qs),
+      )
+    : companies;
+
 
   if (loading) {
     return (
