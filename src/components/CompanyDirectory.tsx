@@ -102,7 +102,9 @@ export default function CompanyDirectory({
         )}
         {!loading && filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No companies found. Make sure your profile has a department set.
+            {onlyUnlocked
+              ? "You haven't unlocked any location yet. Unlock a city above to browse and search its companies."
+              : "No companies found for your department yet. Make sure your profile has a department set."}
           </p>
         )}
         {filtered.map(c => (
