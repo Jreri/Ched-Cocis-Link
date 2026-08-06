@@ -64,17 +64,25 @@ const Profile = () => {
           expected_end_date: p.expected_end_date ?? "",
         })
         setDocuments((p.documents as Record<string, string>) || {})
+        setLocked(!!p.profile_locked)
       }
       setLoading(false)
     })()
   }, [navigate])
 
-  const save = async (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!uid || saving) return
+    if (locked) { doSave() } else { setConfirmOpen(true) }
+  }
+
+  const doSave = async () => {
+    setConfirmOpen(false)
     if (!uid || saving) return
     setSaving(true)
     const payload: any = { ...form }
     Object.keys(payload).forEach(k => { if (payload[k] === "") payload[k] = null })
+    if (!locked) payload.profile_locked = true
     const { data: saved, error } = await supabase
       .from("profiles").update(payload).eq("id", uid).select().maybeSingle()
     await supabase.auth.updateUser({ data: { full_name: form.full_name, department_id: form.department_id, level: form.level, institution: form.institution } })
@@ -88,9 +96,11 @@ const Profile = () => {
         return next
       })
       setDocuments(((saved as any).documents as Record<string, string>) || {})
+      setLocked(!!(saved as any).profile_locked)
     }
-    toast.success("Profile updated")
+    toast.success(locked ? "Profile updated" : "Profile saved — personal and academic details are now locked")
   }
+
 
 
   const upload = async (key: string, file: File) => {
