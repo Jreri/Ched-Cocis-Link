@@ -55,7 +55,9 @@ export default function CompanyDirectory({
         supabase.from("company_requirements").select("company_id, field_key, kind, label, requirement, sort_order"),
       ])
       if (!active) return
-      setRows((data as Row[]) || [])
+      const all = (data as Row[]) || []
+      setRows(onlyUnlocked ? all.filter(c => c.is_unlocked) : all)
+
       const map: Record<string, CompanyRequirementRow[]> = {}
       ;(r || []).forEach((row: any) => {
         map[row.company_id] = [...(map[row.company_id] || []), row as CompanyRequirementRow]
