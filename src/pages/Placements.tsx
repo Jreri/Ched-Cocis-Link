@@ -368,13 +368,22 @@ const Placements = () => {
 
             {selectedState && (
               <Card>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 gap-3">
                   <CardTitle className="text-lg font-display">
                     Cities in <span className="text-primary">{selectedState}</span>
                   </CardTitle>
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      value={citySearch}
+                      onChange={(e) => setCitySearch(e.target.value)}
+                      placeholder="Search a city or area — Ikeja, Lekki, Yaba…"
+                      className="pl-9"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent className="grid sm:grid-cols-2 gap-3">
-                  {cities.map((c) => {
+                  {visibleCities.map((c) => {
                     const isUnlocked = unlocked.has(key(selectedState, c.city));
                     const isViewing = viewingCity?.state === selectedState && viewingCity?.city === c.city;
                     const k = key(selectedState, c.city);
