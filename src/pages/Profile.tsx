@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Save, Upload, CheckCircle2, Trash2 } from "lucide-react"
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Loader2, Save, Upload, CheckCircle2, Trash2, Lock } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { CANONICAL_FIELDS } from "@/lib/applicationFields"
@@ -26,6 +30,8 @@ const Profile = () => {
   const [email, setEmail] = useState("")
   const [departments, setDepartments] = useState<Department[]>([])
   const [documents, setDocuments] = useState<Record<string, string>>({})
+  const [locked, setLocked] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const [form, setForm] = useState({
     full_name: "", department_id: "", level: "", institution: "", phone: "",
     address: "", date_of_birth: "", matric_number: "", university: "",
