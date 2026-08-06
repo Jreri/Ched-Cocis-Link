@@ -157,6 +157,8 @@ const Placements = () => {
   const viewCompanies = async (state: string, city: string) => {
     setViewingCity({ state, city });
     setCompanies([]);
+    setCompanySearch("");
+
     const { data, error } = await supabase.rpc("get_unlocked_companies", {
       _state: state,
       _city: city,
