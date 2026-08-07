@@ -85,6 +85,9 @@ export default function Admin() {
   const [library, setLibrary] = useState<LibraryItem[]>([])
   const libraryRef = useRef<LibraryItem[]>([])
   const [newReqName, setNewReqName] = useState("")
+  const [deptEditor, setDeptEditor] = useState<{ company: Company; ids: string[] } | null>(null)
+  const [deptSearch, setDeptSearch] = useState("")
+  const [deptSaving, setDeptSaving] = useState(false)
 
   const addLibraryItem = async () => {
     const name = newReqName.trim()
