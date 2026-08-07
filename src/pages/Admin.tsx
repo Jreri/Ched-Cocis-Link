@@ -695,7 +695,7 @@ export default function Admin() {
                       <div className="text-xs text-muted-foreground">{c.state}</div>
                     </td>
                     <td className="p-3">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
+                      <div className="flex flex-wrap items-center gap-1 max-w-xs">
                         {(companyDepts[c.id] || []).slice(0, 3).map(did => {
                           const d = departments.find(x => x.id === did)
                           return d ? <Badge key={did} variant="secondary" className="text-[10px]">{d.name}</Badge> : null
@@ -703,8 +703,15 @@ export default function Admin() {
                         {(companyDepts[c.id]?.length || 0) > 3 && (
                           <Badge variant="outline" className="text-[10px]">+{(companyDepts[c.id]?.length || 0) - 3}</Badge>
                         )}
+                        {!(companyDepts[c.id]?.length) && (
+                          <span className="text-[11px] text-muted-foreground">None — hidden from students</span>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => openDeptEditor(c)}>
+                          <Layers className="w-3 h-3 mr-1" /> Edit
+                        </Button>
                       </div>
                     </td>
+
                     <td className="p-3"><Badge variant={c.is_active ? "default" : "outline"}>{c.is_active ? "Active" : "Hidden"}</Badge></td>
                     <td className="p-3 text-right">
                       <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
