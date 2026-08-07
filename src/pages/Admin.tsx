@@ -731,6 +731,47 @@ export default function Admin() {
       </main>
       <Footer />
 
+      <Dialog open={!!deptEditor} onOpenChange={o => !o && setDeptEditor(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Eligible departments</DialogTitle>
+            <DialogDescription>
+              {deptEditor?.company.name} — only students in the selected departments can see and apply to this placement.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input value={deptSearch} onChange={e => setDeptSearch(e.target.value)} placeholder="Search departments…" className="pl-9" />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{deptEditor?.ids.length || 0} selected</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDeptEditor(d => d && ({ ...d, ids: departments.map(x => x.id) }))}>Select all</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDeptEditor(d => d && ({ ...d, ids: [] }))}>Clear</Button>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto rounded-lg border p-3">
+              {departments
+                .filter(d => d.name.toLowerCase().includes(deptSearch.trim().toLowerCase()))
+                .map(d => (
+                  <label key={d.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox checked={!!deptEditor?.ids.includes(d.id)} onCheckedChange={() => toggleEditorDept(d.id)} />
+                    {d.name}
+                  </label>
+                ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeptEditor(null)}>Cancel</Button>
+            <Button onClick={saveDeptEditor} disabled={deptSaving}>
+              {deptSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save departments
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
