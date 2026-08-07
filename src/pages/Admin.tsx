@@ -303,6 +303,38 @@ export default function Admin() {
     setForm(f => ({ ...f, department_ids: f.department_ids.includes(id) ? f.department_ids.filter(x => x !== id) : [...f.department_ids, id] }))
   }
 
+  /** Quick per-company department assignment, independent of the full company form. */
+  const openDeptEditor = (c: Company) => {
+    setDeptEditor({ company: c, ids: companyDepts[c.id] || [] })
+    setDeptSearch("")
+  }
+  const toggleEditorDept = (id: string) => {
+    setDeptEditor(d => d && ({ ...d, ids: d.ids.includes(id) ? d.ids.filter(x => x !== id) : [...d.ids, id] }))
+  }
+  const saveDeptEditor = async () => {
+    if (!deptEditor) return
+    setDeptSaving(true)
+    try {
+      const companyId = deptEditor.company.id
+      await supabase.from("company_departments").delete().eq("company_id", companyId)
+      if (deptEditor.ids.length) {
+        const { error } = await supabase
+          .from("company_departments")
+          .insert(deptEditor.ids.map(did => ({ company_id: companyId, department_id: did })))
+        if (error) throw error
+      }
+      setCompanyDepts(m => ({ ...m, [companyId]: deptEditor.ids }))
+      toast({ title: "Departments updated", description: `${deptEditor.company.name} — ${deptEditor.ids.length} department(s) eligible.` })
+      setDeptEditor(null)
+      await loadAll()
+    } catch (e: any) {
+      toast({ title: "Update failed", description: String(e?.message ?? e), variant: "destructive" })
+    } finally {
+      setDeptSaving(false)
+    }
+  }
+
+
   /**
    * Resolve a free-text Requirements cell into concrete requirement fields.
    * Matches canonical fields first, then the reusable library (case-insensitive),
