@@ -45,13 +45,38 @@ Deno.serve(async (req) => {
       return json({ error: "You have already applied to this company." }, 409);
     }
 
-    // Verify user can apply (RLS-guarded RPC)
+    // ---- Backend eligibility validation (never trust the client) ----
+    // 1. Department must be assigned to this company (RLS-safe, runs as the caller).
+    const { data: visible, error: vErr } = await supabase.rpc("company_visible", { _company_id: company_id });
+    if (vErr) return json({ error: vErr.message }, 400);
+    if (!visible) {
+      return json({ error: "This placement is not open to your department." }, 403);
+    }
+
+    // 2. The company's state/city must be unlocked by this user.
+    const { data: companyLoc } = await admin
+      .from("companies")
+      .select("state, city, is_active")
+      .eq("id", company_id)
+      .maybeSingle();
+    if (!companyLoc || companyLoc.is_active === false) return json({ error: "Company not available" }, 404);
+    const { data: paid, error: pErr } = await supabase.rpc("has_paid_for", {
+      _state: companyLoc.state,
+      _city: companyLoc.city || "Other",
+    });
+    if (pErr) return json({ error: pErr.message }, 400);
+    if (!paid) {
+      return json({ error: "Unlock this location before applying." }, 402);
+    }
+
+    // 3. Final gated fetch (also enforces both rules at the database level).
     const { data: companies, error: cErr } = await supabase.rpc("get_unlocked_company", { _company_id: company_id });
     if (cErr) return json({ error: cErr.message }, 400);
     const company = companies?.[0];
     if (!company) return json({ error: "Company not accessible" }, 403);
     if (company.applications_enabled === false) return json({ error: "Applications closed" }, 400);
     if (!company.internship_email) return json({ error: "This company has no application email configured" }, 400);
+
 
     // Build signed URLs for documents (7 days)
     const docLinks: { label: string; url: string }[] = [];
