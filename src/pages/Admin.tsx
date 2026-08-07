@@ -85,6 +85,9 @@ export default function Admin() {
   const [library, setLibrary] = useState<LibraryItem[]>([])
   const libraryRef = useRef<LibraryItem[]>([])
   const [newReqName, setNewReqName] = useState("")
+  const [deptEditor, setDeptEditor] = useState<{ company: Company; ids: string[] } | null>(null)
+  const [deptSearch, setDeptSearch] = useState("")
+  const [deptSaving, setDeptSaving] = useState(false)
 
   const addLibraryItem = async () => {
     const name = newReqName.trim()
@@ -302,6 +305,38 @@ export default function Admin() {
   const toggleDept = (id: string) => {
     setForm(f => ({ ...f, department_ids: f.department_ids.includes(id) ? f.department_ids.filter(x => x !== id) : [...f.department_ids, id] }))
   }
+
+  /** Quick per-company department assignment, independent of the full company form. */
+  const openDeptEditor = (c: Company) => {
+    setDeptEditor({ company: c, ids: companyDepts[c.id] || [] })
+    setDeptSearch("")
+  }
+  const toggleEditorDept = (id: string) => {
+    setDeptEditor(d => d && ({ ...d, ids: d.ids.includes(id) ? d.ids.filter(x => x !== id) : [...d.ids, id] }))
+  }
+  const saveDeptEditor = async () => {
+    if (!deptEditor) return
+    setDeptSaving(true)
+    try {
+      const companyId = deptEditor.company.id
+      await supabase.from("company_departments").delete().eq("company_id", companyId)
+      if (deptEditor.ids.length) {
+        const { error } = await supabase
+          .from("company_departments")
+          .insert(deptEditor.ids.map(did => ({ company_id: companyId, department_id: did })))
+        if (error) throw error
+      }
+      setCompanyDepts(m => ({ ...m, [companyId]: deptEditor.ids }))
+      toast({ title: "Departments updated", description: `${deptEditor.company.name} — ${deptEditor.ids.length} department(s) eligible.` })
+      setDeptEditor(null)
+      await loadAll()
+    } catch (e: any) {
+      toast({ title: "Update failed", description: String(e?.message ?? e), variant: "destructive" })
+    } finally {
+      setDeptSaving(false)
+    }
+  }
+
 
   /**
    * Resolve a free-text Requirements cell into concrete requirement fields.
@@ -660,7 +695,7 @@ export default function Admin() {
                       <div className="text-xs text-muted-foreground">{c.state}</div>
                     </td>
                     <td className="p-3">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
+                      <div className="flex flex-wrap items-center gap-1 max-w-xs">
                         {(companyDepts[c.id] || []).slice(0, 3).map(did => {
                           const d = departments.find(x => x.id === did)
                           return d ? <Badge key={did} variant="secondary" className="text-[10px]">{d.name}</Badge> : null
@@ -668,8 +703,15 @@ export default function Admin() {
                         {(companyDepts[c.id]?.length || 0) > 3 && (
                           <Badge variant="outline" className="text-[10px]">+{(companyDepts[c.id]?.length || 0) - 3}</Badge>
                         )}
+                        {!(companyDepts[c.id]?.length) && (
+                          <span className="text-[11px] text-muted-foreground">None — hidden from students</span>
+                        )}
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => openDeptEditor(c)}>
+                          <Layers className="w-3 h-3 mr-1" /> Edit
+                        </Button>
                       </div>
                     </td>
+
                     <td className="p-3"><Badge variant={c.is_active ? "default" : "outline"}>{c.is_active ? "Active" : "Hidden"}</Badge></td>
                     <td className="p-3 text-right">
                       <Button size="sm" variant="ghost" onClick={() => openEdit(c)}><Pencil className="w-4 h-4" /></Button>
@@ -688,6 +730,47 @@ export default function Admin() {
 
       </main>
       <Footer />
+
+      <Dialog open={!!deptEditor} onOpenChange={o => !o && setDeptEditor(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Eligible departments</DialogTitle>
+            <DialogDescription>
+              {deptEditor?.company.name} — only students in the selected departments can see and apply to this placement.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input value={deptSearch} onChange={e => setDeptSearch(e.target.value)} placeholder="Search departments…" className="pl-9" />
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{deptEditor?.ids.length || 0} selected</span>
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDeptEditor(d => d && ({ ...d, ids: departments.map(x => x.id) }))}>Select all</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setDeptEditor(d => d && ({ ...d, ids: [] }))}>Clear</Button>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto rounded-lg border p-3">
+              {departments
+                .filter(d => d.name.toLowerCase().includes(deptSearch.trim().toLowerCase()))
+                .map(d => (
+                  <label key={d.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox checked={!!deptEditor?.ids.includes(d.id)} onCheckedChange={() => toggleEditorDept(d.id)} />
+                    {d.name}
+                  </label>
+                ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeptEditor(null)}>Cancel</Button>
+            <Button onClick={saveDeptEditor} disabled={deptSaving}>
+              {deptSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save departments
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
